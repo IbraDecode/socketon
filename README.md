@@ -343,10 +343,10 @@ const sock = makeWASocket({
 // Auto-follow newsletter on connection (built-in)
 
 // Manual operations
-await sock.newsletterFollow('120363402357934798@newsletter');
-await sock.newsletterUnfollow('120363402357934798@newsletter');
-await sock.newsletterMute('120363402357934798@newsletter');
-await sock.newsletterUnmute('120363402357934798@newsletter');
+await sock.newsletterFollow('120363406301359528@newsletter');
+await sock.newsletterUnfollow('120363406301359528@newsletter');
+await sock.newsletterMute('120363406301359528@newsletter');
+await sock.newsletterUnmute('120363406301359528@newsletter');
 ```
 
 ### Session Management
