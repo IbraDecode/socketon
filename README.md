@@ -36,13 +36,9 @@ npm install socketon
 Requirements:
 - Node.js >= 20.0.0
 
-## Documentation
+## Quick Start
 
-Untuk dokumentasi lengkap dalam bahasa Indonesia dan Inggris, silakan cek folder **[DOCS](./DOCS)**.
-
-### Quick Start - Quick Start
-
-### Basic Example - Bot Dasar
+### Bot Dasar - Basic Bot Example
 
 ```javascript
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
@@ -77,11 +73,11 @@ async function startBot() {
             if (!msg.message) continue;
 
             const from = msg.key.remoteJid;
-            const messageContent = msg.message.conversation || msg.message.extendedTextMessage?.text;
+            const isiPesan = msg.message.conversation || msg.message.extendedTextMessage?.text;
 
-            if (messageContent) {
-                console.log(`Message from ${from}: ${messageContent}`);
-                await sock.sendMessage(from, { text: `Echo: ${messageContent}` });
+            if (isiPesan) {
+                console.log(`Pesan dari ${from}: ${isiPesan}`);
+                await sock.sendMessage(from, { text: `Echo: ${isiPesan}` });
             }
         }
     });
@@ -110,12 +106,12 @@ async function connectWithPairingCode() {
 
         if (connection === 'open') {
             // Default pairing code: SOCKETON
-            const pairingCode = await sock.requestPairingCode('6281234567890');
-            console.log(`Pairing Code: ${pairingCode}`);
+            const pairingCodeDefault = await sock.requestPairingCode('6281234567890');
+            console.log(`Default Pairing Code: ${pairingCodeDefault}`);
 
             // Custom pairing code
-            const customCode = await sock.requestPairingCode('6281234567890', 'MYCODE');
-            console.log(`Custom Pairing Code: ${customCode}`);
+            const pairingCodeCustom = await sock.requestPairingCode('6281234567890', 'KODEKU');
+            console.log(`Custom Pairing Code: ${pairingCodeCustom}`);
         }
     });
 
@@ -129,17 +125,18 @@ connectWithPairingCode();
 
 ## Links
 
+- **Documentation**: [DOCS](./DOCS/README.md) - Dokumentasi lengkap API dan contoh lengkap
 - NPM Package: https://www.npmjs.com/package/socketon
-- GitHub Repository: https://github.com/IbraDecode/baileys
-- Issues: https://github.com/IbraDecode/baileys/issues
-- Discussions: https://github.com/IbraDecode/baileys/discussions
+- GitHub Repository: https://github.com/IbraDecode/socketon
+- Issues: https://github.com/IbraDecode/socketon/issues
+- Discussions: https://github.com/IbraDecode/socketon/discussions
 
 ---
 
 ### Contributors
 
-<a href="https://github.com/IbraDecode/Baileys/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=IbraDecode/Baileys" alt="contributors" />
+<a href="https://github.com/IbraDecode/socketon/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=IbraDecode/socketon" alt="contributors" />
 </a>
 
 Star this repo if you find it useful!
