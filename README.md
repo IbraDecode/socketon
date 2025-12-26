@@ -3,8 +3,8 @@
 
 ### Top contributors:
 
-<a href="https://github.com/Baileys/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=othneildrew/Baileys" alt="contrib.rocks image" />
+<a href="https://github.com/IbraDecode/Baileys/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=IbraDecode/Baileys" alt="contrib.rocks image" />
 </a>
 
 <p align="center">
@@ -369,4 +369,3 @@ Because this library offers high stability, full features, and an actively impro
 For complete documentation, installation guides, and implementation examples, please visit the official repository and community forums. We continually update and improve this library to meet the needs of developers and users of modern WhatsApp automation solutions.
 
 **Thank you for choosing WhatsApp Baileys as your WhatsApp automation solution!**
-**
