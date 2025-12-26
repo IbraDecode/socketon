@@ -45,7 +45,7 @@ const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socke
 const pino = require('pino');
 
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
 
     const sock = makeWASocket({
         auth: state,
@@ -93,7 +93,7 @@ const { makeWASocket, useMultiFileAuthState } = require('socketon');
 const pino = require('pino');
 
 async function connectWithPairingCode() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
 
     const sock = makeWASocket({
         auth: state,
@@ -392,7 +392,7 @@ A: Yes, Socketon fully supports WhatsApp's multi-device features.
 A: Yes, Socketon is released under MIT license.
 
 **Q: How to handle reconnections?**
-A: Listen to `connection.update` event (see Quick Start example).
+A: Listen to the `connection.update` event (see Quick Start example).
 
 **Q: Is there a browser-based alternative?**
 A: No, Socketon uses WebSocket directly without requiring a browser.
