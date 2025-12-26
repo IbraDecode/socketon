@@ -1,12 +1,11 @@
 <a id="readme-top"></a>
 # Socketon - Baileys
 
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![Unlicense License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
+### Top contributors:
+
+<a href="https://github.com/Baileys/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=othneildrew/Baileys" alt="contrib.rocks image" />
+</a>
 
 <p align="center">
   <img src="https://files.catbox.moe/369pux.jpg" alt="Thumbnail" />
