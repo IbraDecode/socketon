@@ -47,7 +47,7 @@ pnpm add socketon
 
 ---
 
-## Mulai Cepat (Quick Start)
+## Quick Start
 
 ### Bot Dasar - Basic Bot Example
 
@@ -55,7 +55,7 @@ pnpm add socketon
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
 const pino = require('pino');
 
-async function mulaiBot() {
+async function startBot() {
     // Setup auth state dengan multi-file
     const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
 
@@ -75,10 +75,10 @@ async function mulaiBot() {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) {
                 console.log('Reconnecting...');
-                mulaiBot();
+                startBot();
             }
         } else if (connection === 'open') {
-            console.log('✅ Terhubung!');
+            console.log('Connected successfully!');
         }
     });
 
@@ -93,16 +93,15 @@ async function mulaiBot() {
             const isiPesan = msg.message.conversation || msg.message.extendedTextMessage?.text;
 
             if (isiPesan) {
-                console.log(`📩 Pesan dari ${dari}: ${isiPesan}`);
+                console.log(`Pesan dari ${dari}: ${isiPesan}`);
                 // Balas pesan
-                await sock.sendMessage(dari, { text: `📤 Echo: ${isiPesan}` });
+                await sock.sendMessage(dari, { text: `Echo: ${isiPesan}` });
             }
         }
     });
 }
 
-// Jalankan bot
-mulaiBot();
+startBot();
 ```
 
 ### Pairing Code - Gunakan Pairing Code Khusus
@@ -111,7 +110,7 @@ mulaiBot();
 const { makeWASocket, useMultiFileAuthState } = require('socketon');
 const pino = require('pino');
 
-async function koneksiPairingCode() {
+async function connectWithPairingCode() {
     const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
 
     const sock = makeWASocket({
@@ -127,11 +126,11 @@ async function koneksiPairingCode() {
         if (connection === 'open') {
             // Default pairing code: SOCKETON
             const pairingCodeDefault = await sock.requestPairingCode('6281234567890');
-            console.log(`🔐 Default Pairing Code: ${pairingCodeDefault}`);
+            console.log(`Default Pairing Code: ${pairingCodeDefault}`);
 
             // Custom pairing code
             const pairingCodeCustom = await sock.requestPairingCode('6281234567890', 'KODEKU');
-            console.log(`🔐 Custom Pairing Code: ${pairingCustom}`);
+            console.log(`Custom Pairing Code: ${pairingCodeCustom}`);
         }
     });
 
@@ -139,212 +138,130 @@ async function koneksiPairingCode() {
     sock.ev.on('creds.update', saveCreds);
 }
 
-// Jalankan
-koneksiPairingCode();
+connectWithPairingCode();
 ```
 
 ---
 
-## Fungsi sendMessage - Dokumentasi Lengkap
+## API Reference - Fungsi Socket
 
-### 1. Album Message - Kirim Banyak Foto Sekaligus
-
-Kirim multiple gambar dalam satu pesan album:
+### Connection Management
 
 ```javascript
-await sock.sendMessage(jid, {
-    albumMessage: [
-        { image: fs.readFileSync('./foto1.jpg'), caption: "Foto pertama nih" },
-        { image: { url: "https://example.com/foto2.jpg" }, caption: "Foto kedua nih" }
-    ]
-});
+// Koneksi ke WA Server
+const sock = makeWASocket({ auth: state });
+
+// Update status koneksi
+sock.ws.on('open', () => console.log('WebSocket opened'));
+sock.ws.on('close', () => console.log('WebSocket closed'));
+
+// Status koneksi
+sock.user; // Info user login
 ```
 
-### 2. Event Message - Undangan Event WhatsApp
-
-Buat dan kirim undangan event WhatsApp:
+### Message Functions
 
 ```javascript
-await sock.sendMessage(jid, {
-    eventMessage: {
-        isCanceled: false,
-        name: "Rapat Penting",
-        description: "Rapat pembahasan project Socketon",
-        location: {
-            degreesLatitude: -6.2088,
-            degreesLongitude: 106.8456,
-            name: "Jakarta"
-        },
-        joinLink: "https://call.whatsapp.com/video/xyz",
-        startTime: "1763019000",
-        endTime: "1763026200",
-        extraGuestsAllowed: false
-    }
-});
+// Kirim pesan text
+await sock.sendMessage(jid, { text: 'Halo!' });
+
+// Kirim pesan gambar
+await sock.sendMessage(jid, { image: Buffer.from(data) });
+
+// Kirim pesan video
+await sock.sendMessage(jid, { video: Buffer.from(data) });
+
+// Kirim pesan audio
+await sock.sendMessage(jid, { audio: Buffer.from(data) });
+
+// Kirim pesan document
+await sock.sendMessage(jid, { document: Buffer.from(data), mimetype: 'application/pdf', fileName: 'file.pdf' });
+
+// Kirim pesan lokasi
+await sock.sendMessage(jid, { location: { degreesLatitude: -6.2088, degreesLongitude: 106.8456 } });
+
+// Kirim pesan kontak
+await sock.sendMessage(jid, { contacts: [{ displayName: 'John', vcard: '...' }] });
+
+// Kirim pesan dengan quoted
+await sock.sendMessage(jid, { text: 'Reply', quoted: message });
+
+// Forward pesan
+await sock.sendMessage(jid, { forward: { key: messageKey, message: messageContent } });
+
+// Edit pesan
+await sock.sendMessage(jid, { text: 'Edited', edit: messageKey });
 ```
 
-### 3. Poll Result Message - Hasil Polling
-
-Tampilkan hasil polling dengan jumlah vote:
+### Interactive Messages
 
 ```javascript
-await sock.sendMessage(jid, {
-    pollResultMessage: {
-        name: "Polling Favorit Kamu",
-        pollVotes: [
-            {
-                optionName: "Socketon",
-                optionVoteCount: "150"
-            },
-            {
-                optionName: "Baileys",
-                optionVoteCount: "50"
-            },
-            {
-                optionName: "WhatsApp Web",
-                optionVoteCount: "20"
-            }
-        ]
-    }
-});
-```
-
-### 4. Interactive Message (Simple) - Tombol Copy
-
-Kirim pesan interaktif sederhana dengan tombol copy:
-
-```javascript
+// Tombol dengan single action
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Halo!",
-        title: "Ini judul pesan",
-        footer: "Powered by Socketon",
+        header: 'Judul',
+        title: 'Pesan',
+        footer: 'Socketon',
         buttons: [
             {
-                name: "cta_copy",
+                name: 'cta_url',
                 buttonParamsJson: JSON.stringify({
-                    display_text: "Copy Code",
-                    id: "copy_button",
-                    copy_code: "SOCKETON2025"
+                    display_text: 'Buka',
+                    url: 'https://example.com'
                 })
             }
         ]
     }
 });
-```
 
-### 5. Interactive Message with Native Flow - Menu dengan List
-
-Kirim pesan interaktif dengan menu dan tombol:
-
-```javascript
+// Tombol reply dengan single select
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "📋 Menu Utama",
-        title: "Pilih opsi di bawah:",
-        footer: "Socketon Bot",
-        image: { url: "https://example.com/gambar.jpg" },
+        header: 'Menu',
+        footer: 'Socketon',
+        body: {
+            text: 'Silahkan pilih:'
+        },
         nativeFlowMessage: {
             messageParamsJson: JSON.stringify({
                 bottom_sheet: {
-                    in_thread_buttons_limit: 2,
-                    list_title: "Opsi Tersedia",
-                    button_title: "Lihat Semua"
+                    list_title: 'Daftar Menu',
+                    button_title: 'Lihat'
                 }
             }),
             buttons: [
                 {
-                    name: "cta_copy",
+                    name: 'quick_reply',
                     buttonParamsJson: JSON.stringify({
-                        display_text: "Salin Link",
-                        id: "copy_btn",
-                        copy_code: "https://github.com/IbraDecode/baileys"
+                        display_text: 'Option 1',
+                        id: 'opt1'
                     })
                 },
                 {
-                    name: "single_select",
+                    name: 'quick_reply',
                     buttonParamsJson: JSON.stringify({
-                        title: "Pilih Menu",
-                        sections: [
-                            {
-                                title: "Kategori Utama",
-                                rows: [
-                                    {
-                                        title: "📖 Informasi",
-                                        description: "Lihat info lengkap",
-                                        id: "info"
-                                    },
-                                    {
-                                        title: "⚙️ Pengaturan",
-                                        description: "Atur preferensi",
-                                        id: "settings"
-                                    },
-                                    {
-                                        title: "📞 Kontak",
-                                        description: "Hubungi kami",
-                                        id: "contact"
-                                    }
-                                ]
-                            }
-                        ]
+                        display_text: 'Option 2',
+                        id: 'opt2'
                     })
                 }
             ]
         }
     }
 });
-```
 
-### 6. Product Message - Kirim Produk
-
-Kirim pesan produk dengan tombol beli:
-
-```javascript
-await sock.sendMessage(jid, {
-    productMessage: {
-        title: "Produk Unggulan",
-        description: "Ini deskripsi produk yang sangat menarik dan bermanfaat bagi pengguna",
-        thumbnail: { url: "https://example.com/gambar-produk.jpg" },
-        productId: "PROD001",
-        retailerId: "TOKO001",
-        url: "https://example.com/produk",
-        body: "Detail lengkap produk:",
-        footer: "Stok Terbatas",
-        priceAmount1000: 150000,
-        currencyCode: "IDR",
-        buttons: [
-            {
-                name: "cta_url",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "Beli Sekarang",
-                    url: "https://example.com/beli"
-                })
-            }
-        ]
-    }
-});
-```
-
-### 7. Interactive Message with Document - Kirim Dokumen
-
-Kirim dokumen PDF dengan tombol:
-
-```javascript
+// Tombol copy
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "📄 Dokumen",
-        title: "Dokumen Penting",
-        footer: "Socketon Library",
-        document: fs.readFileSync('./laporan.pdf'),
-        mimetype: "application/pdf",
-        fileName: "laporan-socketon.pdf",
-        jpegThumbnail: fs.readFileSync('./thumbnail-dokumen.jpg'),
+        header: 'Salin Code',
+        title: 'Berikut adalah code Anda:',
+        footer: 'Socketon',
         buttons: [
             {
-                name: "cta_url",
+                name: 'cta_copy',
                 buttonParamsJson: JSON.stringify({
-                    display_text: "Buka Link",
-                    url: "https://example.com/download"
+                    display_text: 'Copy',
+                    id: 'copy_btn',
+                    copy_code: 'SOCKETON2025'
                 })
             }
         ]
@@ -352,35 +269,98 @@ await sock.sendMessage(jid, {
 });
 ```
 
-### 8. Payment Request Message - Permintaan Pembayaran
-
-Kirim permintaan pembayaran:
+### Chat Functions
 
 ```javascript
-await sock.sendMessage(jid, {
-    requestPaymentMessage: {
-        currency: "IDR",
-        amount: 500000,
-        from: jid,
-        note: "Pembayaran untuk layanan Socketon",
-        expiryTimestamp: Math.floor(Date.now() / 1000) + 3600 // 1 jam
-    }
+// Kirim pesan
+await sock.sendMessage(jid, { text: 'Halo!' });
+
+// Kirim pesan ke dalam grup
+await sock.sendMessage('groupId@g.c', { text: 'Halo grup!' });
+
+// Baca pesan
+await sock.chatModify(jid, { mute: 86400 }); // mute selamanya
+await sock.chatModify(jid, { archive: true }); // archive chat
+await sock.chatModify(jid, { pin: true }); // pin chat
+
+// Update presence (online, typing, dll)
+await sock.sendPresenceUpdate(jid, 'composing'); // sedang mengetik
+await sock.sendPresenceUpdate(jid, 'available'); // online
+await sock.sendPresenceUpdate(jid, 'unavailable'); // offline
+await sock.sendPresenceUpdate(jid, 'recording'); // sedang merekam
+
+// Update profile
+await sock.updateProfileStatus('unavailable'); // status profile
+await sock.updateProfilePicture(Buffer.from(photoData)); // update foto profil
+```
+
+### Group Functions
+
+```javascript
+// Buat grup baru
+await sock.groupCreate('6281234567890@g.c', { subject: 'Grup Baru', participants: ['628xxxx@g.c'] });
+
+// Info grup
+const groupMeta = await sock.groupMetadata(jid);
+console.log('Subject:', groupMeta.subject);
+console.log('Participants:', groupMeta.participants);
+
+// Tambah member ke grup
+await sock.groupParticipantsUpdate(jid, ['628xxx@g.c'], 'add');
+
+// Hapus member dari grup
+await sock.groupParticipantsUpdate(jid, ['628xxx@g.c'], 'remove');
+
+// Keluar dari grup
+await sock.groupLeave(jid);
+
+// Update setting grup
+await sock.groupSettingUpdate(jid, { announce: true }); // hanya admin yang bisa posting
+await sock.groupSettingUpdate(jid, { restriction: false }); // nonaktifkan batasan
+```
+
+### Session & Auth
+
+```javascript
+// Logout
+await sock.logout();
+
+// Hapus credentials (restart session)
+await sock.end(undefined);
+
+// Update credentials
+sock.ev.on('creds.update', (creds) => {
+    console.log('Credentials updated:', creds);
 });
+```
+
+### Media Functions
+
+```javascript
+// Upload media ke WhatsApp servers
+await sock.sendMessage(jid, { image: Buffer.from(fileData) });
+
+// Download media
+const media = await sock.downloadMediaMessage(message, 'buffer'); // return buffer
+const mediaUrl = await sock.downloadMediaMessage(message, 'url'); // return direct URL
 ```
 
 ---
 
-## Konfigurasi Socket - Socket Configuration
+## Advanced Configuration
 
 ### Konfigurasi Lengkap
 
 ```javascript
 const sock = makeWASocket({
-    // Diperlukan
+    // Required
     auth: state,
-
+    
     // Opsional - Logging
-    logger: pino({ level: 'info' }),
+    logger: pino({ 
+        level: 'info',
+        timestamp: () => Date.now()
+    }),
     
     // Opsional - Browser info
     browser: ['Socketon', 'Chrome', '1.0'],
@@ -391,16 +371,30 @@ const sock = makeWASocket({
     // Opsional - Generate link preview berkualitas tinggi
     generateHighQualityLinkPreview: true,
     
+    // Opsional - Default message expiry
+    defaultQueryTimeoutMs: 20000, // 20 detik
+    
+    // Opsional - Mendengar message
+    fireInitQueries: true, // query initial messages saat connect
+    
+    // Opsional - Sync full history
+    syncFullHistory: true, // sinkronisasi seluruh chat history
+    
     // Opsional - Custom message handler
     getMessage: async (key) => {
-        return { conversation: "Halo dari Socketon!" };
+        // Handler untuk mengambil pesan dari store
+        const cached = msgStore.get(key);
+        if (cached) {
+            return cached;
+        }
+        return { conversation: 'Pesan dari cache!' };
     }
 });
 ```
 
 ---
 
-## Event - Events
+## Event Handling
 
 ### Connection Events
 
@@ -410,26 +404,39 @@ const sock = makeWASocket({
 sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, receivedPendingNotifications } = update;
     
-    console.log('Status Koneksi:', connection);
-    console.log('Notifikasi Pending:', receivedPendingNotifications);
+    // connection values:
+    // 'connecting' - Sedang menghubung
+    // 'open' - Terhubung dan siap pakai
+    // 'close' - Koneksi terputus
     
-    // connection values: 'connecting', 'open', 'close'
+    // lastDisconnect berisi:
+    // { error } - error yang menyebabkan disconnect
+    // { date } - waktu disconnect
+    
+    // receivedPendingNotifications:
+    // true - ada notifikasi pending yang belum dibaca
+    // false - semua notifikasi sudah dibaca
+    
     if (connection === 'open') {
-        console.log('✅ Terhubung ke WhatsApp!');
+        console.log('Terhubung ke WhatsApp!');
     } else if (connection === 'close') {
-        console.log('❌ Koneksi terputus');
+        console.log('Koneksi terputus:', lastDisconnect);
     }
 });
 ```
-
-### Credentials Events
 
 **creds.update** - Update credentials/auth session
 
 ```javascript
 sock.ev.on('creds.update', (creds) => {
-    console.log('Update credentials:', creds);
-    // creds berisi: me, registered, noiseKey, dll
+    // creds berisi:
+    // { me } - info user login (id, name)
+    // { registered } - status registrasi nomor HP
+    // { noiseKey } - key enkripsi noise protocol
+    // { pairingCode } - pairing code untuk koneksi
+    // { platform } - platform (android, ios, etc)
+    
+    console.log('Credentials update:', creds);
 });
 ```
 
@@ -439,9 +446,46 @@ sock.ev.on('creds.update', (creds) => {
 
 ```javascript
 sock.ev.on('messages.upsert', ({ messages, type }) => {
-    // type values: 'notify', 'append'
+    // type values:
+    // 'notify' - pesan baru (normal)
+    // 'append' - pesan baru yang ditambahkan ke history
+    
     for (const msg of messages) {
+        // msg berisi:
+        // { key } - message key (id, remoteJid, fromMe, participant)
+        // { message } - isi pesan (conversation, extendedTextMessage, imageMessage, etc)
+        // { pushName } - nama kontak pengirim
+        // { messageTimestamp } - waktu pesan dikirim
+        // { messageCid } - message ID di server WA
+        
         console.log('Pesan baru:', msg);
+    }
+});
+```
+
+**chats.upsert** - Update daftar chat
+
+```javascript
+sock.ev.on('chats.upsert', (chats) => {
+    // chats berisi array chat objects
+    // { id } - ID chat
+    // { name } - nama chat (atau nomor kontak)
+    // { readOnly } - status read-only (broadcast, dll)
+    // { unreadCount } - jumlah pesan belum dibaca
+    // { lastMessageTime } - waktu pesan terakhir
+    
+    for (const chat of chats) {
+        console.log('Chat update:', chat.id, chat.name);
+    }
+});
+```
+
+**groups.upsert** - Update grup
+
+```javascript
+sock.ev.on('groups.upsert', (groups) => {
+    for (const group of groups) {
+        console.log('Group update:', group.id);
     }
 });
 ```
@@ -477,22 +521,73 @@ await sock.newsletterMute('120363406301359528@newsletter');
 await sock.newsletterUnmute('120363406301359528@newsletter');
 ```
 
-### Session Management - Manajemen Session
-
-**Multi-File Auth State**
+### Status & Presence - Status Online/Offline
 
 ```javascript
-const { useMultiFileAuthState } = require('socketon');
+// Kirim status "sedang mengetik"
+await sock.sendPresenceUpdate(jid, 'composing');
 
-async function setupSession() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
-    
-    // Simpan credentials setiap update
-    sock.ev.on('creds.update', saveCreds);
-    
-    // state berisi: creds (auth) dan keys (encryption)
-}
+// Kirim status "online"
+await sock.sendPresenceUpdate(jid, 'available');
+
+// Kirim status "offline" (sedang sibuk/tidak di tempat)
+await sock.sendPresenceUpdate(jid, 'unavailable');
+
+// Kirim status "sedang merekam"
+await sock.sendPresenceUpdate(jid, 'recording');
 ```
+
+### Error Handling - Cara Mengatasi Error
+
+**Handle Connection Errors**
+
+```javascript
+sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect } = update;
+    
+    if (connection === 'close') {
+        const error = lastDisconnect?.error;
+        
+        if (error) {
+            console.error('Connection error:', error);
+            
+            // Cek tipe error
+            if (error.message?.includes('403') || error.message?.includes('404')) {
+                console.log('Nomor tidak terdaftar');
+            }
+            else if (error.message?.includes('429')) {
+                console.log('Rate limit exceeded, tunggu sebentar...');
+            }
+        }
+    }
+});
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues (Masalah Umum)
+
+**Issue: Koneksi terputus terus-menerus**
+
+Solution: Pastikan internet stabil dan WhatsApp server sedang tidak down. Cek juga auth state Anda.
+
+**Issue: Pairing code tidak muncul**
+
+Solution: Pastikan nomor HP sudah benar dengan format country code (+628...). Pastikan WhatsApp app terbuka di HP.
+
+**Issue: Session kadalu-kadalu invalid**
+
+Solution: Hapus folder auth_info dan buat koneksi baru.
+
+**Issue: Pesan tidak terkirim**
+
+Solution: Cek log error untuk detail error. Pastikan format pesan sudah benar.
+
+**Issue: Bot tidak responsif**
+
+Solution: Cek event handler dan pastikan kode tidak blocking event loop.
 
 ---
 
@@ -502,7 +597,7 @@ async function setupSession() {
 
 A: Gunakan parameter kedua di requestPairingCode:
 ```javascript
-const code = await sock.requestPairingCode('6281234567890', 'KODECUSTOM');
+const code = await sock.requestPairingCode('6281234567890', 'KODEKU');
 ```
 
 **Q: Apakah ini support multi-device?**
@@ -538,7 +633,7 @@ A: Default pairing code adalah **"SOCKETON"**. Ini otomatis digunakan jika Anda 
 
 **Q: Bagaimana cara ganti newsletter ID?**
 
-A: Newsletter ID diset di lib/Socket/newsletter.js di fungsi auto-follow. Default ID: `120363406301359528@newsletter`.
+A: Newsletter ID diset di lib/Socket/newsletter.js di fungsi auto-follow. Default ID: `120363406301359528@newsletter`. Anda bisa mengedit file tersebut untuk menggantinya.
 
 ---
 
@@ -552,28 +647,7 @@ A: Newsletter ID diset di lib/Socket/newsletter.js di fungsi auto-follow. Defaul
 | Album Messages | Ya | Ya |
 | Interactive Messages | Ya | Ya (Enhanced) |
 | Newsletter Support | Ya | Ya (Enhanced) |
-
----
-
-## Troubleshooting
-
-### Common Issues (Masalah Umum)
-
-**Issue: Koneksi terputus terus-menerus**
-
-Solution: Pastikan internet stabil dan WhatsApp server sedang tidak down. Cek juga auth state Anda.
-
-**Issue: Pairing code tidak muncul**
-
-Solution: Pastikan nomor HP sudah benar dengan format country code (+628...). Pastikan WhatsApp app terbuka di HP.
-
-**Issue: Session kadalu-kadalu invalid**
-
-Solution: Hapus folder auth_info dan buat koneksi baru.
-
-**Issue: Pesan tidak terkirim**
-
-Solution: Cek log error untuk detail error. Pastikan format pesan sudah benar.
+| Full API Documentation | Terbatas | Ya (Comprehensive) |
 
 ---
 
@@ -605,9 +679,9 @@ MIT License - Lihat file [LICENSE](../LICENSE) untuk detail lengkap.
 ## Links - Tautan Penting
 
 - NPM Package: https://www.npmjs.com/package/socketon
-- GitHub Repository: https://github.com/IbraDecode/baileys
-- Issues: https://github.com/IbraDecode/baileys/issues
-- Discussions: https://github.com/IbraDecode/baileys/discussions
+- GitHub Repository: https://github.com/IbraDecode/socketon
+- Issues: https://github.com/IbraDecode/socketon/issues
+- Discussions: https://github.com/IbraDecode/socketon/discussions
 
 ---
 
