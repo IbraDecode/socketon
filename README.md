@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/npm/l/socketon)
 
 <p align="center">
-  <img src="https://files.catbox.moe/369pux.jpg" alt="Socketon" width="300" />
+  <img src="https://raw.githubusercontent.com/kiuur/kiuur/refs/heads/main/backround.jpg" alt="Socketon" width="300" />
 </p>
 
 Socketon is a WhatsApp API library forked from Baileys with enhanced features including custom pairing codes, better session management, and improved stability. It uses WebSocket to connect to WhatsApp without requiring a browser.
