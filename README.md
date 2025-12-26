@@ -4,8 +4,6 @@
 
 <a id="readme-top"></a>
 
-<h1 align="center">Socketon</h1>
-
 <p align="center">
   WhatsApp API library (fork of baileys) with improved stability, custom pairing code, and better session handling.
 </p>
