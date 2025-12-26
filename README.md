@@ -1,371 +1,556 @@
 <a id="readme-top"></a>
-# Socketon - Baileys
 
-### Top contributors:
+# 🚀 Socketon
 
-<a href="https://github.com/IbraDecode/Baileys/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=IbraDecode/Baileys" alt="contrib.rocks image" />
-</a>
+[![NPM Version](https://img.shields.io/npm/v/socketon?style=flat-square)](https://www.npmjs.com/package/socketon)
+[![NPM Downloads](https://img.shields.io/npm/dm/socketon?style=flat-square)](https://www.npmjs.com/package/socketon)
+[![License](https://img.shields.io/npm/l/socketon?style=flat-square)](https://github.com/IbraDecode/baileys)
+[![Node Version](https://img.shields.io/node/v/socketon?style=flat-square)](https://github.com/IbraDecode/baileys)
 
 <p align="center">
-  <img src="https://files.catbox.moe/369pux.jpg" alt="Thumbnail" />
+  <img src="https://files.catbox.moe/369pux.jpg" alt="Socketon Logo" width="300" />
 </p>
 
-WhatsApp Baileys is an open-source library designed to help developers build automation solutions and integrations with WhatsApp efficiently and directly. Using websocket technology without the need for a browser, this library supports a wide range of features such as message management, chat handling, group administration, as well as interactive messages and action buttons for a more dynamic user experience.
+<p align="center">
+  <b>WhatsApp API Library - Modified & Enhanced</b><br>
+  Stable, Fast, and Feature-Rich WhatsApp Automation Library
+</p>
 
-Actively developed and maintained, baileys continuously receives updates to enhance stability and performance. One of the main focuses is to improve the pairing and authentication processes to be more stable and secure. Pairing features can be customized with your own codes, making the process more reliable and less prone to interruptions.
-
-This library is highly suitable for building business bots, chat automation systems, customer service solutions, and various other communication automation applications that require high stability and comprehensive features. With a lightweight and modular design, baileys is easy to integrate into different systems and platforms.
-
----
-
-### Main Features and Advantages
-
-- Supports automatic and custom pairing processes
-- Fixes previous pairing issues that often caused failures or disconnections
-- Supports interactive messages, action buttons, and dynamic menus
-- Efficient automatic session management for reliable operation
-- Compatible with the latest multi-device features from WhatsApp
-- Lightweight, stable, and easy to integrate into various systems
-- Suitable for developing bots, automation, and complete communication solutions
-- Comprehensive documentation and example codes to facilitate development
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-documentation">Documentation</a> •
+  <a href="#-examples">Examples</a>
+</p>
 
 ---
 
-## Getting Started
+## 📖 About
 
-Begin by installing the library via your preferred package manager, then follow the provided configuration guide. You can also utilize the ready-made example codes to understand how the features work. Use session storage and interactive messaging features to build complete, stable solutions tailored to your business or project needs.
+**Socketon** is a powerful WhatsApp API library forked from Baileys, enhanced with improved stability, custom pairing codes, and better session management. It uses WebSocket technology to connect to WhatsApp without requiring a browser, making it lightweight and efficient.
+
+This library is actively maintained and continuously updated to ensure compatibility with the latest WhatsApp features, including multi-device support, interactive messages, and advanced automation capabilities.
 
 ---
 
-## SendMessage Documentation
+## ✨ Features
 
-### Album Message (Multiple Images)
-Send multiple images in a single album message:
+- 🔗 **Custom Pairing Codes** - Use your own pairing codes for stable authentication
+- 📱 **Multi-Device Support** - Full support for WhatsApp's multi-device features
+- 💬 **Interactive Messages** - Send buttons, lists, and dynamic menus
+- 📊 **Album Messages** - Send multiple images in a single album
+- 📈 **Newsletter Support** - Auto-follow newsletters and manage channels
+- 🎯 **Event Messages** - Create and manage WhatsApp events
+- 📝 **Poll Messages** - Create polls and display results
+- 💳 **Payment Messages** - Send payment requests
+- 🛒 **Product Messages** - Display products and catalogs
+- 📎 **Document Support** - Send documents with rich formatting
+- 🔄 **Auto Session Management** - Persistent and reliable session handling
+- 🚀 **High Performance** - Lightweight and fast, no browser required
 
-```javascript
-await sock.sendMessage(jid, { 
-    albumMessage: [
-        { image: cihuy, caption: "Foto pertama" },
-        { image: { url: "URL IMAGE" }, caption: "Foto kedua" }
-    ] 
-}, { quoted: m });
+---
+
+## 📦 Installation
+
+```bash
+# Using npm
+npm install socketon
+
+# Using yarn
+yarn add socketon
+
+# Using pnpm
+pnpm add socketon
 ```
 
-### Event Message
+**Requirements:**
+- Node.js >= 20.0.0
+- npm or yarn package manager
+
+---
+
+## 🚀 Quick Start
+
+### Basic Bot Example
+
+```javascript
+const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
+const pino = require('pino');
+
+async function startBot() {
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
+
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: true,
+        logger: pino({ level: 'silent' })
+    });
+
+    // Auto-reconnect on disconnect
+    sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect } = update;
+
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            if (shouldReconnect) {
+                startBot();
+            }
+        } else if (connection === 'open') {
+            console.log('✅ Bot connected successfully!');
+        }
+    });
+
+    // Listen for messages
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
+
+        for (const msg of messages) {
+            if (!msg.message) continue;
+
+            const from = msg.key.remoteJid;
+            const messageContent = msg.message.conversation || msg.message.extendedTextMessage?.text;
+
+            if (messageContent) {
+                console.log(`📩 Message from ${from}: ${messageContent}`);
+
+                // Reply to the message
+                await sock.sendMessage(from, { text: `Echo: ${messageContent}` });
+            }
+        }
+    });
+}
+
+startBot();
+```
+
+### Pairing Code Example
+
+```javascript
+const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
+const pino = require('pino');
+
+async function connectWithPairingCode() {
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
+
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false, // Disable QR
+        logger: pino({ level: 'silent' })
+    });
+
+    // Request pairing code
+    sock.ev.on('connection.update', async (update) => {
+        const { connection } = update;
+
+        if (connection === 'open') {
+            console.log('✅ Connected!');
+
+            // Request pairing code with default "SOCKETON"
+            const pairingCode = await sock.requestPairingCode('6281234567890');
+            console.log(`📱 Pairing Code: ${pairingCode}`);
+
+            // Or use custom pairing code
+            const customCode = await sock.requestPairingCode('6281234567890', 'MYCODE');
+            console.log(`📱 Custom Pairing Code: ${customCode}`);
+        }
+    });
+
+    sock.ev.on('creds.update', saveCreds);
+}
+
+connectWithPairingCode();
+```
+
+---
+
+## 📚 Documentation
+
+### SendMessage Methods
+
+#### Album Message (Multiple Images)
+
+Send multiple images in a single album:
+
+```javascript
+await sock.sendMessage(jid, {
+    albumMessage: [
+        { image: fs.readFileSync('./image1.jpg'), caption: "First image" },
+        { image: { url: "https://example.com/image2.jpg" }, caption: "Second image" }
+    ]
+});
+```
+
+#### Event Message
+
 Create and send WhatsApp event invitations:
 
 ```javascript
-await sock.sendMessage(jid, { 
-    eventMessage: { 
-        isCanceled: false, 
-        name: "Hello World", 
-        description: "yume native", 
-        location: { 
-            degreesLatitude: 0, 
-            degreesLongitude: 0, 
-            name: "rowrrrr" 
-        }, 
-        joinLink: "https://call.whatsapp.com/video/yumevtc", 
-        startTime: "1763019000", 
-        endTime: "1763026200", 
-        extraGuestsAllowed: false 
-    } 
-}, { quoted: m });
+await sock.sendMessage(jid, {
+    eventMessage: {
+        isCanceled: false,
+        name: "My Event",
+        description: "Event description",
+        location: {
+            degreesLatitude: 0,
+            degreesLongitude: 0,
+            name: "Location Name"
+        },
+        joinLink: "https://call.whatsapp.com/video/xyz",
+        startTime: "1763019000",
+        endTime: "1763026200",
+        extraGuestsAllowed: false
+    }
+});
 ```
 
-### Poll Result Message
+#### Poll Result Message
+
 Display poll results with vote counts:
 
 ```javascript
-await sock.sendMessage(jid, { 
-    pollResultMessage: { 
-        name: "Hello World", 
+await sock.sendMessage(jid, {
+    pollResultMessage: {
+        name: "My Poll",
         pollVotes: [
             {
-                optionName: "TEST 1",
-                optionVoteCount: "112233"
+                optionName: "Option 1",
+                optionVoteCount: "100"
             },
             {
-                optionName: "TEST 2",
-                optionVoteCount: "1"
+                optionName: "Option 2",
+                optionVoteCount: "50"
             }
-        ] 
-    } 
-}, { quoted: m });
+        ]
+    }
+});
 ```
 
-### Simple Interactive Message
-Send basic interactive messages with copy button functionality:
+#### Interactive Message (Simple)
+
+Send interactive messages with copy button:
 
 ```javascript
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Hello World",
-        title: "Hello World",
-        footer: "telegram: @yumevtc ",
+        header: "Header Text",
+        title: "Title Text",
+        footer: "Footer Text",
         buttons: [
             {
                 name: "cta_copy",
                 buttonParamsJson: JSON.stringify({
-                    display_text: "copy code",
-                    id: "123456789",              
-                    copy_code: "ABC123XYZ"
+                    display_text: "Copy Code",
+                    id: "copy_button",
+                    copy_code: "ABC123"
                 })
             }
         ]
     }
-}, { quoted: m });
+});
 ```
 
-### Interactive Message with Native Flow
-Send interactive messages with buttons, copy actions, and native flow features:
+#### Interactive Message with Native Flow
 
-```javascript
-await sock.sendMessage(jid, {    
-    interactiveMessage: {      
-        header: "Hello World",
-        title: "Hello World",      
-        footer: "telegram: @yumevtc",      
-        image: { url: "https://example.com/image.jpg" },      
-        nativeFlowMessage: {        
-            messageParamsJson: JSON.stringify({          
-                limited_time_offer: {            
-                    text: "idk hummmm?",            
-                    url: "https://t.me/yumevtc",            
-                    copy_code: "yume",            
-                    expiration_time: Date.now() * 999          
-                },          
-                bottom_sheet: {            
-                    in_thread_buttons_limit: 2,            
-                    divider_indices: [1, 2, 3, 4, 5, 999],            
-                    list_title: "yume native",            
-                    button_title: "yume native"          
-                },          
-                tap_target_configuration: {            
-                    title: " X ",            
-                    description: "bomboclard",            
-                    canonical_url: "https://t.me/yumevtc",            
-                    domain: "shop.example.com",            
-                    button_index: 0          
-                }        
-            }),        
-            buttons: [          
-                {            
-                    name: "single_select",            
-                    buttonParamsJson: JSON.stringify({              
-                        has_multiple_buttons: true            
-                    })          
-                },          
-                {            
-                    name: "call_permission_request",            
-                    buttonParamsJson: JSON.stringify({              
-                        has_multiple_buttons: true            
-                    })          
-                },          
-                {            
-                    name: "single_select",            
-                    buttonParamsJson: JSON.stringify({              
-                        title: "Hello World",              
-                        sections: [                
-                            {                  
-                                title: "title",                  
-                                highlight_label: "label",                  
-                                rows: [                    
-                                    {                      
-                                        title: "@yumevtc",                      
-                                        description: "love you",                      
-                                        id: "row_2"                    
-                                    }                  
-                                ]                
-                            }              
-                        ],              
-                        has_multiple_buttons: true            
-                    })          
-                },          
-                {            
-                    name: "cta_copy",            
-                    buttonParamsJson: JSON.stringify({              
-                        display_text: "copy code",              
-                        id: "123456789",              
-                        copy_code: "ABC123XYZ"            
-                    })          
-                }        
-            ]      
-        }    
-    }  
-}, { quoted: m });
-```
-
-### Interactive Message with Thumbnail
-Send interactive messages with thumbnail image and copy button:
+Advanced interactive messages with multiple button types:
 
 ```javascript
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Hello World",
-        title: "Hello World",
-        footer: "telegram: @yumevtc",
+        header: "Advanced Menu",
+        title: "Choose an option",
+        footer: "Powered by Socketon",
         image: { url: "https://example.com/image.jpg" },
-        buttons: [
-            {
-                name: "cta_copy",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "copy code",
-                    id: "123456789",
-                    copy_code: "ABC123XYZ"
-                })
-            }
-        ]
+        nativeFlowMessage: {
+            messageParamsJson: JSON.stringify({
+                bottom_sheet: {
+                    in_thread_buttons_limit: 2,
+                    list_title: "Menu Options",
+                    button_title: "View Menu"
+                }
+            }),
+            buttons: [
+                {
+                    name: "cta_copy",
+                    buttonParamsJson: JSON.stringify({
+                        display_text: "Copy Code",
+                        id: "copy_btn",
+                        copy_code: "SOCKETON"
+                    })
+                },
+                {
+                    name: "single_select",
+                    buttonParamsJson: JSON.stringify({
+                        title: "Select Option",
+                        sections: [
+                            {
+                                title: "Main Menu",
+                                rows: [
+                                    {
+                                        title: "Option 1",
+                                        description: "Description 1",
+                                        id: "opt_1"
+                                    },
+                                    {
+                                        title: "Option 2",
+                                        description: "Description 2",
+                                        id: "opt_2"
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                }
+            ]
+        }
     }
-}, { quoted: m });
+});
 ```
 
-### Product Message
-Send product catalog messages with buttons and merchant information:
+#### Product Message
+
+Send product catalog messages:
 
 ```javascript
 await sock.sendMessage(jid, {
     productMessage: {
-        title: "Produk Contoh",
-        description: "Ini adalah deskripsi produk",
-        thumbnail: { url: "https://example.com/image.jpg" },
+        title: "Product Name",
+        description: "Product description",
+        thumbnail: { url: "https://example.com/thumbnail.jpg" },
         productId: "PROD001",
         retailerId: "RETAIL001",
         url: "https://example.com/product",
-        body: "Detail produk",
-        footer: "Harga spesial",
+        body: "Product Details",
+        footer: "Special Price",
         priceAmount1000: 50000,
         currencyCode: "USD",
         buttons: [
             {
                 name: "cta_url",
                 buttonParamsJson: JSON.stringify({
-                    display_text: "Beli Sekarang",
+                    display_text: "Buy Now",
                     url: "https://example.com/buy"
                 })
             }
         ]
     }
-}, { quoted: m });
+});
 ```
 
-### Interactive Message with Document Buffer
-Send interactive messages with document from buffer (file system) - **Note: Documents only support buffer**:
+#### Interactive Message with Document
+
+Send documents with interactive buttons:
 
 ```javascript
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Hello World",
-        title: "Hello World",
-        footer: "telegram: @yumevtc",
-        document: fs.readFileSync("./package.json"),
+        header: "Document Header",
+        title: "Document Title",
+        footer: "Powered by Socketon",
+        document: fs.readFileSync('./document.pdf'),
         mimetype: "application/pdf",
-        fileName: "yumevtc.pdf",
-        jpegThumbnail: fs.readFileSync("./document.jpeg"),
-        contextInfo: {
-            mentionedJid: [jid],
-            forwardingScore: 777,
-            isForwarded: false
-        },
-        externalAdReply: {
-            title: "shenń Bot",
-            body: "anu team",
-            mediaType: 3,
-            thumbnailUrl: "https://example.com/image.jpg",
-            mediaUrl: " X ",
-            sourceUrl: "https://t.me/yumevtc",
-            showAdAttribution: true,
-            renderLargerThumbnail: false         
-        },
+        fileName: "document.pdf",
+        jpegThumbnail: fs.readFileSync('./thumbnail.jpg'),
         buttons: [
             {
                 name: "cta_url",
                 buttonParamsJson: JSON.stringify({
-                    display_text: "Telegram",
-                    url: "https://t.me/yumevtc",
-                    merchant_url: "https://t.me/yumevtc"
+                    display_text: "Open Link",
+                    url: "https://example.com"
                 })
             }
         ]
     }
-}, { quoted: m });
+});
 ```
 
-### Interactive Message with Document Buffer (Simple)
-Send interactive messages with document from buffer (file system) without contextInfo and externalAdReply - **Note: Documents only support buffer**:
+#### Payment Request Message
+
+Send payment requests:
 
 ```javascript
-await sock.sendMessage(jid, {
-    interactiveMessage: {
-        header: "Hello World",
-        title: "Hello World",
-        footer: "telegram: @yumevtc",
-        document: fs.readFileSync("./package.json"),
-        mimetype: "application/pdf",
-        fileName: "yumevtc.pdf",
-        jpegThumbnail: fs.readFileSync("./document.jpeg"),
-        buttons: [
-            {
-                name: "cta_url",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "Telegram",
-                    url: "https://t.me/yumevtc",
-                    merchant_url: "https://t.me/yumevtc"
-                })
-            }
-        ]
-    }
-}, { quoted: m });
-```
-
-### Request Payment Message
-Send payment request messages with custom background and sticker:
-
-```javascript
-let quotedType = m.quoted?.mtype || '';
-let quotedContent = JSON.stringify({ [quotedType]: m.quoted }, null, 2);
-
 await sock.sendMessage(jid, {
     requestPaymentMessage: {
         currency: "IDR",
-        amount: 10000000,
-        from: m.sender,
-        sticker: JSON.parse(quotedContent),
-        background: {
-            id: "100",
-            fileLength: "0",
-            width: 1000,
-            height: 1000,
-            mimetype: "image/webp",
-            placeholderArgb: 0xFF00FFFF,
-            textArgb: 0xFFFFFFFF,     
-            subtextArgb: 0xFFAA00FF   
-        }
+        amount: 100000,
+        from: jid,
+        note: "Payment for services",
+        expiryTimestamp: Math.floor(Date.now() / 1000) + 3600
     }
-}, { quoted: m });
+});
 ```
 
 ---
 
-## Why Choose WhatsApp Baileys?
+## 🔧 Configuration
 
-Because this library offers high stability, full features, and an actively improved pairing process. It is ideal for developers aiming to create professional and secure WhatsApp automation solutions. Support for the latest WhatsApp features ensures compatibility with platform updates.
+### Socket Configuration Options
+
+```javascript
+const sock = makeWASocket({
+    // Required
+    auth: state,
+
+    // Optional
+    printQRInTerminal: true,        // Print QR code in terminal
+    logger: pino({ level: 'info' }), // Logging level
+    browser: ['Socketon', 'Chrome', '1.0'], // Browser info
+    markOnlineOnConnect: true,       // Mark as online when connected
+    generateHighQualityLinkPreview: true, // Better link previews
+    getMessage: async (key) => {    // Custom message fetching
+        return { conversation: "Hello" };
+    },
+    patchMessageBeforeSending: (message) => { // Modify messages before sending
+        return message;
+    }
+});
+```
 
 ---
 
-### Technical Notes
+## 🛠️ Advanced Features
 
-- Supports custom pairing codes that are stable and secure
-- Fixes previous issues related to pairing and authentication
-- Features interactive messages and action buttons for dynamic menu creation
-- Automatic and efficient session management for long-term stability
-- Compatible with the latest multi-device features from WhatsApp
-- Easy to integrate and customize based on your needs
-- Perfect for developing bots, customer service automation, and other communication applications
+### Newsletter Features
+
+```javascript
+// Auto-follow newsletter on connection
+// (Built-in feature - automatically follows IbraDecode channel)
+
+// Manual newsletter operations
+await sock.newsletterFollow('120363402357934798@newsletter');
+await sock.newsletterUnfollow('120363402357934798@newsletter');
+await sock.newsletterMute('120363402357934798@newsletter');
+await sock.newsletterUnmute('120363402357934798@newsletter');
+```
+
+### Session Management
+
+```javascript
+const { useMultiFileAuthState } = require('socketon');
+
+// Save session to multiple files
+const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
+
+// Save credentials
+sock.ev.on('creds.update', saveCreds);
+```
+
+### Connection Events
+
+```javascript
+// Connection updates
+sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect, receivedPendingNotifications } = update;
+
+    if (connection === 'open') {
+        console.log('✅ Connected');
+    } else if (connection === 'close') {
+        console.log('❌ Disconnected:', lastDisconnect?.error);
+    }
+});
+
+// Credentials update
+sock.ev.on('creds.update', saveCreds);
+
+// Messages
+sock.ev.on('messages.upsert', ({ messages, type }) => {
+    console.log('New messages:', messages);
+});
+
+// Chats
+sock.ev.on('chats.upsert', (chats) => {
+    console.log('New chats:', chats);
+});
+
+// Groups
+sock.ev.on('groups.upsert', (groups) => {
+    console.log('New groups:', groups);
+});
+```
 
 ---
 
-For complete documentation, installation guides, and implementation examples, please visit the official repository and community forums. We continually update and improve this library to meet the needs of developers and users of modern WhatsApp automation solutions.
+## ❓ FAQ
 
-**Thank you for choosing WhatsApp Baileys as your WhatsApp automation solution!**
+### Q: How do I change the default pairing code?
+A: Use the second parameter when calling `requestPairingCode`:
+```javascript
+const code = await sock.requestPairingCode('6281234567890', 'MYCUSTOMCODE');
+```
+
+### Q: Does this support multiple devices?
+A: Yes, Socketon fully supports WhatsApp's multi-device features.
+
+### Q: Can I use this for commercial purposes?
+A: Yes, Socketon is released under MIT license and can be used for commercial projects.
+
+### Q: How do I handle reconnections?
+A: Listen to the `connection.update` event and reconnect on disconnect (see Quick Start example).
+
+### Q: Is there a browser-based alternative?
+A: No, Socketon uses WebSocket directly without requiring a browser, making it more efficient.
+
+---
+
+## 📊 Comparison with Baileys
+
+| Feature | Baileys | Socketon |
+|---------|----------|----------|
+| Custom Pairing Codes | ❌ | ✅ |
+| Auto Newsletter Follow | ❌ | ✅ |
+| Default Pairing Code | ❌ | ✅ (SOCKETON) |
+| Number Validation | ❌ | ✅ (Customizable) |
+| Album Messages | ✅ | ✅ |
+| Interactive Messages | ✅ | ✅ |
+| Newsletter Support | ✅ | ✅ Enhanced |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Credits
+
+- **Original Baileys** by [@adiwajshing](https://github.com/adiwajshing/baileys)
+- **Socketon Modification** by [IbraDecode](https://github.com/IbraDecode)
+
+---
+
+## 🔗 Links
+
+- **NPM Package**: https://www.npmjs.com/package/socketon
+- **GitHub Repository**: https://github.com/IbraDecode/baileys
+- **Issues**: https://github.com/IbraDecode/baileys/issues
+- **Discussions**: https://github.com/IbraDecode/baileys/discussions
+
+---
+
+### Top Contributors
+
+<a href="https://github.com/IbraDecode/Baileys/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=IbraDecode/Baileys" alt="contrib.rocks image" />
+</a>
+
+---
+
+<p align="center">
+  <b>⭐ Star this repo if you find it useful!</b><br>
+  Made with ❤️ by IbraDecode
+</p>
+
+<a href="#readme-top">⬆ Back to Top</a>
