@@ -1,78 +1,44 @@
 <a id="readme-top"></a>
 
-# 🚀 Socketon
+# Socketon
 
-[![NPM Version](https://img.shields.io/npm/v/socketon?style=flat-square)](https://www.npmjs.com/package/socketon)
-[![NPM Downloads](https://img.shields.io/npm/dm/socketon?style=flat-square)](https://www.npmjs.com/package/socketon)
-[![License](https://img.shields.io/npm/l/socketon?style=flat-square)](https://github.com/IbraDecode/baileys)
-[![Node Version](https://img.shields.io/node/v/socketon?style=flat-square)](https://github.com/IbraDecode/baileys)
-
-<p align="center">
-  <img src="https://files.catbox.moe/369pux.jpg" alt="Socketon Logo" width="300" />
-</p>
+![NPM Version](https://img.shields.io/npm/v/socketon)
+![NPM Downloads](https://img.shields.io/npm/dm/socketon)
+![License](https://img.shields.io/npm/l/socketon)
 
 <p align="center">
-  <b>WhatsApp API Library - Modified & Enhanced</b><br>
-  Stable, Fast, and Feature-Rich WhatsApp Automation Library
+  <img src="https://files.catbox.moe/369pux.jpg" alt="Socketon" width="300" />
 </p>
 
-<p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-documentation">Documentation</a> •
-  <a href="#-examples">Examples</a>
-</p>
+Socketon is a WhatsApp API library forked from Baileys with enhanced features including custom pairing codes, better session management, and improved stability. It uses WebSocket to connect to WhatsApp without requiring a browser.
 
----
+## Features
 
-## 📖 About
+- Custom pairing codes for stable authentication
+- Multi-device support
+- Interactive messages (buttons, lists, menus)
+- Album messages (multiple images)
+- Newsletter support with auto-follow
+- Event messages
+- Poll messages with results
+- Payment request messages
+- Product messages
+- Document support
+- Auto session management
+- Lightweight and fast, no browser required
 
-**Socketon** is a powerful WhatsApp API library forked from Baileys, enhanced with improved stability, custom pairing codes, and better session management. It uses WebSocket technology to connect to WhatsApp without requiring a browser, making it lightweight and efficient.
-
-This library is actively maintained and continuously updated to ensure compatibility with the latest WhatsApp features, including multi-device support, interactive messages, and advanced automation capabilities.
-
----
-
-## ✨ Features
-
-- 🔗 **Custom Pairing Codes** - Use your own pairing codes for stable authentication
-- 📱 **Multi-Device Support** - Full support for WhatsApp's multi-device features
-- 💬 **Interactive Messages** - Send buttons, lists, and dynamic menus
-- 📊 **Album Messages** - Send multiple images in a single album
-- 📈 **Newsletter Support** - Auto-follow newsletters and manage channels
-- 🎯 **Event Messages** - Create and manage WhatsApp events
-- 📝 **Poll Messages** - Create polls and display results
-- 💳 **Payment Messages** - Send payment requests
-- 🛒 **Product Messages** - Display products and catalogs
-- 📎 **Document Support** - Send documents with rich formatting
-- 🔄 **Auto Session Management** - Persistent and reliable session handling
-- 🚀 **High Performance** - Lightweight and fast, no browser required
-
----
-
-## 📦 Installation
+## Installation
 
 ```bash
-# Using npm
 npm install socketon
-
-# Using yarn
-yarn add socketon
-
-# Using pnpm
-pnpm add socketon
 ```
 
-**Requirements:**
+Requirements:
 - Node.js >= 20.0.0
-- npm or yarn package manager
 
----
+## Quick Start
 
-## 🚀 Quick Start
-
-### Basic Bot Example
+### Basic Example
 
 ```javascript
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
@@ -87,7 +53,6 @@ async function startBot() {
         logger: pino({ level: 'silent' })
     });
 
-    // Auto-reconnect on disconnect
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
 
@@ -97,11 +62,10 @@ async function startBot() {
                 startBot();
             }
         } else if (connection === 'open') {
-            console.log('✅ Bot connected successfully!');
+            console.log('Connected successfully!');
         }
     });
 
-    // Listen for messages
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
         if (type !== 'notify') return;
 
@@ -112,9 +76,7 @@ async function startBot() {
             const messageContent = msg.message.conversation || msg.message.extendedTextMessage?.text;
 
             if (messageContent) {
-                console.log(`📩 Message from ${from}: ${messageContent}`);
-
-                // Reply to the message
+                console.log(`Message from ${from}: ${messageContent}`);
                 await sock.sendMessage(from, { text: `Echo: ${messageContent}` });
             }
         }
@@ -124,10 +86,10 @@ async function startBot() {
 startBot();
 ```
 
-### Pairing Code Example
+### Pairing Code
 
 ```javascript
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
+const { makeWASocket, useMultiFileAuthState } = require('socketon');
 const pino = require('pino');
 
 async function connectWithPairingCode() {
@@ -135,24 +97,21 @@ async function connectWithPairingCode() {
 
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: false, // Disable QR
+        printQRInTerminal: false,
         logger: pino({ level: 'silent' })
     });
 
-    // Request pairing code
     sock.ev.on('connection.update', async (update) => {
         const { connection } = update;
 
         if (connection === 'open') {
-            console.log('✅ Connected!');
-
-            // Request pairing code with default "SOCKETON"
+            // Default pairing code: SOCKETON
             const pairingCode = await sock.requestPairingCode('6281234567890');
-            console.log(`📱 Pairing Code: ${pairingCode}`);
+            console.log(`Pairing Code: ${pairingCode}`);
 
-            // Or use custom pairing code
+            // Custom pairing code
             const customCode = await sock.requestPairingCode('6281234567890', 'MYCODE');
-            console.log(`📱 Custom Pairing Code: ${customCode}`);
+            console.log(`Custom Pairing Code: ${customCode}`);
         }
     });
 
@@ -162,15 +121,9 @@ async function connectWithPairingCode() {
 connectWithPairingCode();
 ```
 
----
+## SendMessage Documentation
 
-## 📚 Documentation
-
-### SendMessage Methods
-
-#### Album Message (Multiple Images)
-
-Send multiple images in a single album:
+### Album Message
 
 ```javascript
 await sock.sendMessage(jid, {
@@ -181,9 +134,7 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Event Message
-
-Create and send WhatsApp event invitations:
+### Event Message
 
 ```javascript
 await sock.sendMessage(jid, {
@@ -194,7 +145,7 @@ await sock.sendMessage(jid, {
         location: {
             degreesLatitude: 0,
             degreesLongitude: 0,
-            name: "Location Name"
+            name: "Location"
         },
         joinLink: "https://call.whatsapp.com/video/xyz",
         startTime: "1763019000",
@@ -204,9 +155,7 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Poll Result Message
-
-Display poll results with vote counts:
+### Poll Result Message
 
 ```javascript
 await sock.sendMessage(jid, {
@@ -226,16 +175,14 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Interactive Message (Simple)
-
-Send interactive messages with copy button:
+### Interactive Message (Simple)
 
 ```javascript
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Header Text",
-        title: "Title Text",
-        footer: "Footer Text",
+        header: "Header",
+        title: "Title",
+        footer: "Footer",
         buttons: [
             {
                 name: "cta_copy",
@@ -250,22 +197,20 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Interactive Message with Native Flow
-
-Advanced interactive messages with multiple button types:
+### Interactive Message with Native Flow
 
 ```javascript
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Advanced Menu",
-        title: "Choose an option",
-        footer: "Powered by Socketon",
+        header: "Menu",
+        title: "Choose Option",
+        footer: "Socketon",
         image: { url: "https://example.com/image.jpg" },
         nativeFlowMessage: {
             messageParamsJson: JSON.stringify({
                 bottom_sheet: {
                     in_thread_buttons_limit: 2,
-                    list_title: "Menu Options",
+                    list_title: "Options",
                     button_title: "View Menu"
                 }
             }),
@@ -273,7 +218,7 @@ await sock.sendMessage(jid, {
                 {
                     name: "cta_copy",
                     buttonParamsJson: JSON.stringify({
-                        display_text: "Copy Code",
+                        display_text: "Copy",
                         id: "copy_btn",
                         copy_code: "SOCKETON"
                     })
@@ -281,19 +226,19 @@ await sock.sendMessage(jid, {
                 {
                     name: "single_select",
                     buttonParamsJson: JSON.stringify({
-                        title: "Select Option",
+                        title: "Select",
                         sections: [
                             {
-                                title: "Main Menu",
+                                title: "Menu",
                                 rows: [
                                     {
                                         title: "Option 1",
-                                        description: "Description 1",
+                                        description: "Desc 1",
                                         id: "opt_1"
                                     },
                                     {
                                         title: "Option 2",
-                                        description: "Description 2",
+                                        description: "Desc 2",
                                         id: "opt_2"
                                     }
                                 ]
@@ -307,20 +252,18 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Product Message
-
-Send product catalog messages:
+### Product Message
 
 ```javascript
 await sock.sendMessage(jid, {
     productMessage: {
         title: "Product Name",
-        description: "Product description",
-        thumbnail: { url: "https://example.com/thumbnail.jpg" },
+        description: "Description",
+        thumbnail: { url: "https://example.com/thumb.jpg" },
         productId: "PROD001",
         retailerId: "RETAIL001",
         url: "https://example.com/product",
-        body: "Product Details",
+        body: "Details",
         footer: "Special Price",
         priceAmount1000: 50000,
         currencyCode: "USD",
@@ -337,25 +280,23 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Interactive Message with Document
-
-Send documents with interactive buttons:
+### Interactive Message with Document
 
 ```javascript
 await sock.sendMessage(jid, {
     interactiveMessage: {
-        header: "Document Header",
-        title: "Document Title",
-        footer: "Powered by Socketon",
+        header: "Document",
+        title: "Title",
+        footer: "Socketon",
         document: fs.readFileSync('./document.pdf'),
         mimetype: "application/pdf",
         fileName: "document.pdf",
-        jpegThumbnail: fs.readFileSync('./thumbnail.jpg'),
+        jpegThumbnail: fs.readFileSync('./thumb.jpg'),
         buttons: [
             {
                 name: "cta_url",
                 buttonParamsJson: JSON.stringify({
-                    display_text: "Open Link",
+                    display_text: "Open",
                     url: "https://example.com"
                 })
             }
@@ -364,9 +305,7 @@ await sock.sendMessage(jid, {
 });
 ```
 
-#### Payment Request Message
-
-Send payment requests:
+### Payment Request Message
 
 ```javascript
 await sock.sendMessage(jid, {
@@ -374,49 +313,36 @@ await sock.sendMessage(jid, {
         currency: "IDR",
         amount: 100000,
         from: jid,
-        note: "Payment for services",
+        note: "Payment",
         expiryTimestamp: Math.floor(Date.now() / 1000) + 3600
     }
 });
 ```
 
----
-
-## 🔧 Configuration
-
-### Socket Configuration Options
+## Configuration
 
 ```javascript
 const sock = makeWASocket({
-    // Required
     auth: state,
-
-    // Optional
-    printQRInTerminal: true,        // Print QR code in terminal
-    logger: pino({ level: 'info' }), // Logging level
-    browser: ['Socketon', 'Chrome', '1.0'], // Browser info
-    markOnlineOnConnect: true,       // Mark as online when connected
-    generateHighQualityLinkPreview: true, // Better link previews
-    getMessage: async (key) => {    // Custom message fetching
+    printQRInTerminal: true,
+    logger: pino({ level: 'info' }),
+    browser: ['Socketon', 'Chrome', '1.0'],
+    markOnlineOnConnect: true,
+    generateHighQualityLinkPreview: true,
+    getMessage: async (key) => {
         return { conversation: "Hello" };
-    },
-    patchMessageBeforeSending: (message) => { // Modify messages before sending
-        return message;
     }
 });
 ```
 
----
+## Advanced Features
 
-## 🛠️ Advanced Features
-
-### Newsletter Features
+### Newsletter
 
 ```javascript
-// Auto-follow newsletter on connection
-// (Built-in feature - automatically follows IbraDecode channel)
+// Auto-follow newsletter on connection (built-in)
 
-// Manual newsletter operations
+// Manual operations
 await sock.newsletterFollow('120363402357934798@newsletter');
 await sock.newsletterUnfollow('120363402357934798@newsletter');
 await sock.newsletterMute('120363402357934798@newsletter');
@@ -428,129 +354,96 @@ await sock.newsletterUnmute('120363402357934798@newsletter');
 ```javascript
 const { useMultiFileAuthState } = require('socketon');
 
-// Save session to multiple files
 const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
-
-// Save credentials
 sock.ev.on('creds.update', saveCreds);
 ```
 
 ### Connection Events
 
 ```javascript
-// Connection updates
 sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect, receivedPendingNotifications } = update;
-
-    if (connection === 'open') {
-        console.log('✅ Connected');
-    } else if (connection === 'close') {
-        console.log('❌ Disconnected:', lastDisconnect?.error);
-    }
+    const { connection, lastDisconnect } = update;
+    console.log('Connection:', connection);
 });
 
-// Credentials update
 sock.ev.on('creds.update', saveCreds);
 
-// Messages
-sock.ev.on('messages.upsert', ({ messages, type }) => {
-    console.log('New messages:', messages);
+sock.ev.on('messages.upsert', ({ messages }) => {
+    console.log('Messages:', messages);
 });
 
-// Chats
 sock.ev.on('chats.upsert', (chats) => {
-    console.log('New chats:', chats);
-});
-
-// Groups
-sock.ev.on('groups.upsert', (groups) => {
-    console.log('New groups:', groups);
+    console.log('Chats:', chats);
 });
 ```
 
----
+## FAQ
 
-## ❓ FAQ
-
-### Q: How do I change the default pairing code?
-A: Use the second parameter when calling `requestPairingCode`:
+**Q: How to change default pairing code?**
+A: Use the second parameter:
 ```javascript
-const code = await sock.requestPairingCode('6281234567890', 'MYCUSTOMCODE');
+const code = await sock.requestPairingCode('6281234567890', 'MYCODE');
 ```
 
-### Q: Does this support multiple devices?
+**Q: Does this support multiple devices?**
 A: Yes, Socketon fully supports WhatsApp's multi-device features.
 
-### Q: Can I use this for commercial purposes?
-A: Yes, Socketon is released under MIT license and can be used for commercial projects.
+**Q: Can I use this for commercial purposes?**
+A: Yes, Socketon is released under MIT license.
 
-### Q: How do I handle reconnections?
-A: Listen to the `connection.update` event and reconnect on disconnect (see Quick Start example).
+**Q: How to handle reconnections?**
+A: Listen to `connection.update` event (see Quick Start example).
 
-### Q: Is there a browser-based alternative?
-A: No, Socketon uses WebSocket directly without requiring a browser, making it more efficient.
+**Q: Is there a browser-based alternative?**
+A: No, Socketon uses WebSocket directly without requiring a browser.
 
----
-
-## 📊 Comparison with Baileys
+## Comparison with Baileys
 
 | Feature | Baileys | Socketon |
 |---------|----------|----------|
-| Custom Pairing Codes | ❌ | ✅ |
-| Auto Newsletter Follow | ❌ | ✅ |
-| Default Pairing Code | ❌ | ✅ (SOCKETON) |
-| Number Validation | ❌ | ✅ (Customizable) |
-| Album Messages | ✅ | ✅ |
-| Interactive Messages | ✅ | ✅ |
-| Newsletter Support | ✅ | ✅ Enhanced |
+| Custom Pairing Codes | No | Yes |
+| Auto Newsletter Follow | No | Yes |
+| Default Pairing Code | No | Yes (SOCKETON) |
+| Album Messages | Yes | Yes |
+| Interactive Messages | Yes | Yes |
+| Newsletter Support | Yes | Yes (Enhanced) |
 
----
+## Contributing
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome!
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
 5. Open a Pull Request
 
----
+## License
 
-## 📄 License
+MIT License - see [LICENSE](LICENSE) file for details.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Credits
 
----
+- Original Baileys by [@adiwajshing](https://github.com/adiwajshing/baileys)
+- Socketon Modification by [IbraDecode](https://github.com/IbraDecode)
 
-## 🙏 Credits
+## Links
 
-- **Original Baileys** by [@adiwajshing](https://github.com/adiwajshing/baileys)
-- **Socketon Modification** by [IbraDecode](https://github.com/IbraDecode)
-
----
-
-## 🔗 Links
-
-- **NPM Package**: https://www.npmjs.com/package/socketon
-- **GitHub Repository**: https://github.com/IbraDecode/baileys
-- **Issues**: https://github.com/IbraDecode/baileys/issues
-- **Discussions**: https://github.com/IbraDecode/baileys/discussions
+- NPM Package: https://www.npmjs.com/package/socketon
+- GitHub Repository: https://github.com/IbraDecode/baileys
+- Issues: https://github.com/IbraDecode/baileys/issues
+- Discussions: https://github.com/IbraDecode/baileys/discussions
 
 ---
 
-### Top Contributors
+### Contributors
 
 <a href="https://github.com/IbraDecode/Baileys/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=IbraDecode/Baileys" alt="contrib.rocks image" />
+  <img src="https://contrib.rocks/image?repo=IbraDecode/Baileys" alt="contributors" />
 </a>
 
----
+Star this repo if you find it useful!
 
-<p align="center">
-  <b>⭐ Star this repo if you find it useful!</b><br>
-  Made with ❤️ by IbraDecode
-</p>
+Made by IbraDecode
 
-<a href="#readme-top">⬆ Back to Top</a>
+<a href="#readme-top">Back to Top</a>
