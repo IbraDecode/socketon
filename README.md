@@ -1,146 +1,186 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kiuur/kiuur/refs/heads/main/backround.jpg" alt="Socketon" width="300" />
+  <img src="https://raw.githubusercontent.com/kiuur/kiuur/refs/heads/main/backround.jpg" alt="socketon" width="320" />
 </p>
 
 <a id="readme-top"></a>
 
-# Socketon
+<h1 align="center">Socketon</h1>
 
-![NPM Version](https://img.shields.io/npm/v/socketon)
-![NPM Downloads](https://img.shields.io/npm/dm/socketon)
-![License](https://img.shields.io/npm/l/socketon)
+<p align="center">
+  WhatsApp API library (fork of baileys) with improved stability, custom pairing code, and better session handling.
+</p>
 
-Socketon is a WhatsApp API library forked from Baileys with enhanced features including custom pairing codes, better session management, and improved stability. It uses WebSocket to connect to WhatsApp without requiring a browser.
+<p align="center">
+  <a href="https://www.npmjs.com/package/socketon">
+    <img src="https://img.shields.io/npm/v/socketon" />
+  </a>
+  <a href="https://www.npmjs.com/package/socketon">
+    <img src="https://img.shields.io/npm/dm/socketon" />
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/npm/l/socketon" />
+  </a>
+</p>
 
-## Features
+---
 
-- Custom pairing codes for stable authentication
-- Multi-device support
-- Interactive messages (buttons, lists, menus)
-- Album messages (multiple images)
-- Newsletter support with auto-follow
-- Event messages
-- Poll messages with results
-- Payment request messages
-- Product messages
-- Document support
-- Auto session management
-- Lightweight and fast, no browser required
+## why socketon?
 
-## Installation
+kalau kamu ngerasa baileys sekarang udah delay, suka double respon, atau kadang infinite connecting, socketon bisa jadi alternatif yang lebih enak.
+
+ini fork dari baileys yang difokusin buat stabilitas, session handling, dan pairing code yang lebih fleksibel. sebagian besar api tetap sama, jadi migrasi dari baileys biasanya gak butuh perubahan besar.
+
+---
+
+## features
+
+- custom pairing code (default: socketon)
+- improved session handling (lebih rapih dan stabil)
+- multi-device support
+- interactive messages (buttons, list, native flow)
+- album messages (multiple images)
+- newsletter support + auto-follow (built-in)
+- event / poll / payment request / product messages
+- document support
+- lightweight and fast, no browser required
+
+---
+
+## installation
 
 ```bash
-npm install socketon
+npm i socketon
 ```
 
-Requirements:
-- Node.js >= 20.0.0
+requirements:
+- node.js >= 20
 
-## Quick Start
+---
 
-### Bot Dasar - Basic Bot Example
+## quick start
 
-```javascript
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('socketon');
-const pino = require('pino');
+### connect (qr)
 
-async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
+```js
+const { makeWASocket, useMultiFileAuthState } = require('socketon')
 
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
-        logger: pino({ level: 'silent' })
-    });
+async function start() {
+  const { state, saveCreds } = await useMultiFileAuthState('./auth')
 
-    sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true
+  })
 
-        if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) {
-                startBot();
-            }
-        } else if (connection === 'open') {
-            console.log('Connected successfully!');
-        }
-    });
+  sock.ev.on('creds.update', saveCreds)
 
-    sock.ev.on('messages.upsert', async ({ messages, type }) => {
-        if (type !== 'notify') return;
-
-        for (const msg of messages) {
-            if (!msg.message) continue;
-
-            const from = msg.key.remoteJid;
-            const isiPesan = msg.message.conversation || msg.message.extendedTextMessage?.text;
-
-            if (isiPesan) {
-                console.log(`Pesan dari ${from}: ${isiPesan}`);
-                await sock.sendMessage(from, { text: `Echo: ${isiPesan}` });
-            }
-        }
-    });
+  sock.ev.on('connection.update', ({ connection }) => {
+    if (connection === 'open') console.log('connected')
+    if (connection === 'close') console.log('disconnected')
+  })
 }
 
-startBot();
+start()
 ```
 
-### Pairing Code - Pairing Code
+### auto reply (simple)
 
-```javascript
-const { makeWASocket, useMultiFileAuthState } = require('socketon');
-const pino = require('pino');
+```js
+sock.ev.on('messages.upsert', async ({ messages }) => {
+  const m = messages[0]
+  if (!m?.message || m.key.fromMe) return
 
-async function connectWithPairingCode() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_socketon');
+  const jid = m.key.remoteJid
+  const text = m.message.conversation || m.message.extendedTextMessage?.text
+  if (!text) return
 
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: false,
-        logger: pino({ level: 'silent' })
-    });
-
-    sock.ev.on('connection.update', async (update) => {
-        const { connection } = update;
-
-        if (connection === 'open') {
-            // Default pairing code: SOCKETON
-            const pairingCodeDefault = await sock.requestPairingCode('6281234567890');
-            console.log(`Default Pairing Code: ${pairingCodeDefault}`);
-
-            // Custom pairing code
-            const pairingCodeCustom = await sock.requestPairingCode('6281234567890', 'KODEKU');
-            console.log(`Custom Pairing Code: ${pairingCodeCustom}`);
-        }
-    });
-
-    sock.ev.on('creds.update', saveCreds);
-}
-
-connectWithPairingCode();
+  await sock.sendMessage(jid, { text: `echo: ${text}` })
+})
 ```
 
 ---
 
-## Links
+## pairing code (no qr)
 
-- **Documentation**: [DOCS](./DOCS/README.md) - Dokumentasi lengkap API dan contoh lengkap
-- NPM Package: https://www.npmjs.com/package/socketon
-- GitHub Repository: https://github.com/IbraDecode/socketon
-- Issues: https://github.com/IbraDecode/socketon/issues
-- Discussions: https://github.com/IbraDecode/socketon/discussions
+```js
+const { makeWASocket, useMultiFileAuthState } = require('socketon')
+
+async function pairing() {
+  const { state, saveCreds } = await useMultiFileAuthState('./auth')
+
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: false
+  })
+
+  sock.ev.on('creds.update', saveCreds)
+
+  sock.ev.on('connection.update', async ({ connection }) => {
+    if (connection !== 'open') return
+
+    const code = await sock.requestPairingCode('6281234567890')
+    console.log('pairing code:', code)
+
+    // custom
+    // const custom = await sock.requestPairingCode('6281234567890', 'KODEKAMU')
+    // console.log('custom code:', custom)
+  })
+}
+
+pairing()
+```
 
 ---
 
-### Contributors
+## migration from baileys
+
+pindah dari baileys biasanya simpel, cukup ganti import:
+
+```js
+// baileys
+const { makeWASocket } = require('@whiskeysockets/baileys')
+
+// socketon
+const { makeWASocket } = require('socketon')
+```
+
+---
+
+## docs
+
+full docs dan advanced examples:
+- [DOCS/README.md](./DOCS/README.md)
+
+---
+
+## links
+
+- npm: https://www.npmjs.com/package/socketon
+- repo: https://github.com/IbraDecode/socketon
+- issues: https://github.com/IbraDecode/socketon/issues
+- discussions: https://github.com/IbraDecode/socketon/discussions
+
+---
+
+## contributors
 
 <a href="https://github.com/IbraDecode/socketon/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=IbraDecode/socketon" alt="contributors" />
 </a>
 
-Star this repo if you find it useful!
+---
 
-Made by IbraDecode
+## credits
 
-<a href="#readme-top">Back to Top</a>
+- original baileys by @adiwajshing
+- modified and maintained by kiuur & ibra decode
+
+---
+
+<p align="center">
+  star repo ini kalau bermanfaat
+</p>
+
+<p align="center">
+  <a href="#readme-top">back to top</a>
+</p>
