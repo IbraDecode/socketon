@@ -1,6 +1,6 @@
 {
     "name": "socketon",
-    "version": "0.29.4",
+    "version": "0.29.5",
     "description": "WhatsApp API Library - Socketon By IbraDecode",
     "keywords": [
         "whatsapp",
@@ -14,9 +14,9 @@
         "whatsapp-api",
         "socketon-whatsapp"
     ],
-    "homepage": "https://github.com/IbraDecode/baileys",
+    "homepage": "https://github.com/IbraDecode/socketon",
     "repository": {
-        "url": "https://github.com/IbraDecode/baileys"
+        "url": "https://github.com/IbraDecode/socketon"
     },
     "license": "MIT",
     "author": "IbraDecode",
