@@ -1,23 +1,25 @@
 {
     "name": "socketon",
-    "version": "2.0.3",
-    "description": "WhatsApp API Modification By X",
+    "version": "0.29.0",
+    "description": "WhatsApp API Library - Socketon By IbraDecode",
     "keywords": [
         "whatsapp",
-        "alice-assistent",
+        "socketon",
         "baileys",
         "whatsapp-web",
         "whatsapp-chat",
         "whatsapp-group",
         "botwa",
-        "xyroorynzz"
+        "whatsapp-bot",
+        "whatsapp-api",
+        "socketon-whatsapp"
     ],
-    "homepage": "https://www.npmjs.com/package/@stvnnvs/baileys",
+    "homepage": "https://github.com/IbraDecode/baileys",
     "repository": {
-        "url": "https://www.npmjs.com/package/@stvnnvs/baileys"
+        "url": "https://github.com/IbraDecode/baileys"
     },
     "license": "MIT",
-    "author": "Adhiraj Singh",
+    "author": "IbraDecode",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
     "files": [
