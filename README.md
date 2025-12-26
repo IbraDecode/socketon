@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kiuur/kiuur/refs/heads/main/backround.jpg" alt="socketon" width="320" />
+  <img src="https://files.catbox.moe/0wl8py.png" alt="socketon" width="320" />
 </p>
 
 <a id="readme-top"></a>
