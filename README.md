@@ -46,242 +46,11 @@ This is a fork of Baileys focused on stability, session handling, and more flexi
 
 ---
 
-## Installation
-
-```bash
-npm install socketon
-```
-
-Requirements:
-- Node.js >= 20.0.0
-
----
-
-## Quick Start
-
-### Basic Echo Bot
-
-```javascript
-const { makeWASocket, useMultiFileAuthState } = require('socketon');
-
-async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState('./auth');
-
-  const sock = makeWASocket({
-    auth: state
-  });
-
-  sock.ev.on('connection.update', (update) => {
-    const { connection, qr } = update;
-
-    if (qr) console.log('Scan QR Code:', qr);
-    if (connection === 'open') console.log('Connected to WhatsApp!');
-  });
-
-  sock.ev.on('messages.upsert', async ({ messages }) => {
-    for (const msg of messages) {
-      if (msg.key.fromMe) continue;
-
-      const jid = msg.key.remoteJid;
-      const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
-
-      console.log(`Message from ${jid}: ${text}`);
-
-      if (text) {
-        await sock.sendMessage(jid, { text: `Echo: ${text}` });
-      }
-    }
-  });
-
-  sock.ev.on('creds.update', saveCreds);
-}
-
-startBot().catch(console.error);
-```
-
-### Pairing Code Authentication
-
-```javascript
-const { makeWASocket, useMultiFileAuthState } = require('socketon');
-
-async function startWithPairing() {
-  const { state, saveCreds } = await useMultiFileAuthState('./auth');
-
-  const sock = makeWASocket({
-    auth: state
-  });
-
-  sock.ev.on('connection.update', async (update) => {
-    const { connection } = update;
-
-    if (connection === 'open') {
-      // Default pairing code (obfuscated in source)
-      const pairingCode = await sock.requestPairingCode('6281234567890');
-      console.log('Pairing Code:', pairingCode);
-
-      // Or use custom pairing code
-      const customCode = await sock.requestPairingCode('6281234567890', 'MYCODE');
-      console.log('Custom Pairing Code:', customCode);
-    }
-  });
-
-  sock.ev.on('creds.update', saveCreds);
-}
-
-startWithPairing().catch(console.error);
-```
-
----
-
-## Core Architecture
-
-### Layered Socket System
-
-Socketon uses a layered architecture for better modularity and maintainability:
-
-```
-makeWASocket()
-  └── makeCommunitiesSocket()    # Communities support
-      └── makeBusinessSocket()      # Business features
-          └── makeMessagesRecvSocket()  # Message receiving
-              └── makeMessagesSocket()   # Message sending
-                  └── makeNewsletterSocket() # Newsletter features
-                      └── makeGroupsSocket() # Group management
-                          └── makeChatsSocket()  # Chat operations
-                              └── makeSocket()  # Core WebSocket connection
-```
-
-### Key Components
-
-**Socket Layer (`lib/Socket/`)**
-- `socket.js`: Core WebSocket connection, Noise protocol handshake, pairing code authentication
-- `messages-send.js`: Message generation, encryption, device enumeration
-- `messages-recv.js`: Message decryption, receipt handling, retry logic
-- `groups.js`: Group metadata, participants management, invite codes
-- `communities.js`: Community creation, linked groups, membership approval
-- `business.js`: Product catalog, orders, business profile
-- `newsletter.js`: Newsletter creation, following, reactions
-
-**Signal Layer (`lib/Signal/`)**
-- `libsignal.js`: E2E encryption using libsignal-xeuka
-- Group cipher and sender key distribution for group messages
-- Session management and LID/PN addressing for multi-device
-
-**Binary Protocol (`lib/WABinary/`)**
-- `encode.js`: Binary node encoding for WhatsApp protocol
-- `decode.js`: Binary node decoding
-- `constants.js`: Protocol constants (643KB)
-- `jid-utils.js`: JID parsing, encoding, and validation
-
-**Utils (`lib/Utils/`)**
-- `messages.js`: Message generation helpers, media handling
-- `messages-media.js`: Media upload/download, encryption, thumbnail generation
-- `event-buffer.js`: Event buffering and flushing mechanism
-- `auth-utils.js`: Authentication helpers, pre-key management
-
-### Security Features
-
-- **Noise Protocol**: Noise_XX_25519_AESGCM_SHA256 for connection handshake
-- **E2E Encryption**: Full end-to-end encryption via libsignal-xeuka
-- **Pre-Key Management**: Automatic pre-key upload (INITIAL: 812, MIN: 5)
-- **Sender Key**: Group message encryption using sender key distribution
-- **LID/PN Addressing**: Secure multi-device communication with session migration
-
-### Event System
-
-The event-driven architecture uses an event buffer for reliable event handling:
-
-```javascript
-// Available events
-connection.update  // Connection state changes
-messages.upsert    // New messages
-messages.update    // Message updates (status, reactions)
-messages.delete    // Message deletion
-chats.upsert       // Chat updates
-groups.update      // Group metadata updates
-newsletter.reaction // Newsletter reactions
-call               // Incoming/outgoing calls
-creds.update       // Credential updates
-```
-
----
-
-## Advanced Usage
-
-### In-Memory Store
-
-```javascript
-const { makeInMemoryStore } = require('socketon');
-
-const store = makeInMemoryStore({ socket: sock });
-store.bind(sock.ev);
-
-// Access stored data
-const chats = store.chats.all();
-const messages = store.loadMessages('jid@s.whatsapp.net', 50);
-```
-
-### Message Retry
-
-Socketon includes automatic message retry with session recreation:
-
-```javascript
-const sock = makeWASocket({
-  auth: state,
-  enableAutoSessionRecreation: true,
-  maxMsgRetryCount: 5
-});
-```
-
-### Privacy Settings
-
-```javascript
-// Update privacy settings
-await sock.updateReadReceiptsPrivacy('all');
-await sock.updateOnlinePrivacy('all');
-await sock.updateProfilePicturePrivacy('contacts');
-
-// Fetch current settings
-const settings = await sock.fetchPrivacySettings();
-```
-
-### Business Features
-
-```javascript
-// Create product
-await sock.productCreate({
-  name: 'My Product',
-  description: 'Product description',
-  priceAmount1000: 10000,
-  currency: 'IDR',
-  images: [Buffer.from('image.jpg')]
-});
-
-// Get catalog
-const catalog = await sock.getCatalog({ jid, limit: 20 });
-```
-
-### Newsletter Operations
-
-```javascript
-// Create newsletter
-const newsletter = await sock.newsletterCreate('My Newsletter', 'Description');
-
-// Send to newsletter
-await sock.sendMessage(newsletter.id, { text: 'Hello subscribers' });
-
-// React to message
-await sock.newsletterReactMessage(newsletter.id, serverId, '❤️');
-```
-
----
-
-
 ## makeWASocketon - Simplified Socket Initialization
 
 `makeWASocketon()` is a simplified wrapper around `makeWASocket()` with built-in features like auto-reconnect, message serialization, and helper methods.
 
-### Basic Usage
+### Quick Start - Basic
 
 ```javascript
 const { makeWASocketon } = require('socketon');
@@ -291,7 +60,7 @@ const sock = await makeWASocketon({
   pairingNumber: '6281234567890', // Phone number (without +)
   onMessage: async (msg) => {   // Message handler
     if (msg.text === '!ping') {
-      await sock.reply(msg, 'Pong! 🏓');
+      await sock.reply(msg, 'Pong! PING');
     }
   }
 });
@@ -307,7 +76,7 @@ const sock = await makeWASocketon({
   pairingNumber: '6281234567890',
   pairingCode: 'MYCODE12',       // Optional: 8 characters
   onMessage: async (msg) => {
-    await sock.reply(msg, 'Hello!');
+    await sock.reply(msg, 'Hello! HELLO');
   }
 });
 ```
@@ -368,7 +137,48 @@ await sock.setPresence('recording', 'jid@s.whatsapp.net');
 await sock.shutdown();
 ```
 
-### Example Bot
+### Connection Status Events
+
+```javascript
+const sock = await makeWASocketon({
+  sessionDir: './session',
+  pairingNumber: '6281234567890',
+  onConnection: (status, data) => {
+    switch(status) {
+      case 'connecting':
+        console.log('Connecting...');
+        break;
+      case 'open':
+        console.log('Connection opened successfully!');
+        break;
+      case 'close':
+        console.log('Connection closed');
+        if (data.autoReconnect) {
+          console.log('Auto-reconnecting...');
+        }
+        break;
+      case 'reconnecting':
+        console.log('Reconnecting (attempt ' + data.attempt + ')');
+        break;
+      case 'loggedOut':
+        console.log('Session logged out. Delete session folder.');
+        break;
+      case 'requesting_pairing_code':
+        console.log('Requesting pairing code...');
+        break;
+      case 'pairing_code_ready':
+        console.log('Pairing Code:', data.code);
+        console.log('Pairing Number:', data.pairingNumber);
+        break;
+    }
+  },
+  onMessage: async (msg) => {
+    console.log('Message:', msg.text);
+  }
+});
+```
+
+### Example Bot - Full
 
 ```javascript
 const { makeWASocketon } = require('socketon');
@@ -378,31 +188,34 @@ const sock = await makeWASocketon({
   pairingNumber: '6281234567890',
   onConnection: (status) => {
     if (status === 'open') {
-      console.log('✅ Bot is ready!');
+      console.log('Bot is ready!');
     }
   },
   onGroupJoin: async (msg) => {
-    await sock.reply(msg, `Welcome @${msg.author}! 👋`);
+    await sock.reply(msg, 'Welcome @' + msg.author + '!');
+  },
+  onGroupLeave: async (msg) => {
+    await sock.reply(msg, 'Goodbye @' + msg.author + '!');
   },
   onMessage: async (msg) => {
     const text = msg.text.toLowerCase();
     
     if (text === '!menu') {
       await sock.reply(msg, `
-📋 *MENU*
+MENU
 • !ping - Test bot
 • !info - Bot info
 • !owner - Contact owner
       `);
     }
     else if (text === '!ping') {
-      await sock.reply(msg, 'Pong! ⚡');
+      await sock.reply(msg, 'Pong! PING');
     }
     else if (text === '!info') {
       await sock.reply(msg, `
-🤖 *BOT INFO*
+BOT INFO
 Status: Online
-Session: ${sock.sessionId}
+Session: ' + sock.sessionId
 Socketon: v1.51.16
       `);
     }
@@ -411,7 +224,7 @@ Socketon: v1.51.16
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\nShutting down...');
+  console.log('Shutting down...');
   await sock.shutdown();
   process.exit(0);
 });
@@ -421,81 +234,192 @@ process.on('SIGINT', async () => {
 
 Socketon includes built-in auto-reconnect with exponential backoff to prevent getting banned:
 
-- **Base delay:** 5 seconds
-- **Max delay:** 60 seconds
-- **Max attempts:** 10
+- Base delay: 5 seconds
+- Max delay: 60 seconds  
+- Max attempts: 10
 
 Reconnect formula:
 ```
 delay = min(5000 * 2^attempt, 60000)
 ```
 
-## Troubleshooting
+### Validation Rules
 
-### Common Issues
+- Pairing Code: Must be exactly 8 characters if provided
+- Session Directory: Must be provided (auto-created if not exists)
+- Pairing Number: Must be provided (phone number without +)
+- onMessage: Must be a function
 
-**Connection Problems**
-- Check internet connection
-- Ensure WhatsApp account is active
-- Try deleting `auth/` folder and re-authenticating
-
-**Authentication Issues**
-- Delete auth folder and scan QR again
-- Check file permissions on auth directory
-- Ensure stable network during authentication
-
-**Message Failures**
-- Verify JID format (e.g., `6281234567890@s.whatsapp.net`)
-- Check if recipient blocked you
-- Implement retry logic for reliability
-
-**Pre-Key Errors**
-- Automatic pre-key upload is enabled by default
-- Check logs for pre-key upload status
-- Manual upload available via `uploadPreKeys()`
+Error: "pairingCode must be 8 characters long"
+       (If pairingCode is not 8 characters)
 
 ---
 
-## Contributing
+## Installation
 
-We welcome contributions! Please see our contributing guidelines for details.
+```bash
+npm install socketon
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-<a href="https://github.com/IbraDecode/socketon/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=IbraDecode/socketon" alt="contributors" />
-</a>
+Requirements:
+- Node.js >= 20.0.0
 
 ---
 
-## License
+## Core Architecture
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Layered Socket System
+
+Socketon uses a layered architecture for better modularity and maintainability:
+
+```
+makeWASocket()
+  └── makeCommunitiesSocket()    # Communities support
+      └── makeBusinessSocket()      # Business features
+          └── makeMessagesRecvSocket()  # Message receiving
+              └── makeMessagesSocket()   # Message sending
+                  └── makeNewsletterSocket() # Newsletter features
+                      └── makeGroupsSocket() # Group management
+                          └── makeChatsSocket()  # Chat operations
+                              └── makeSocket()  # Core WebSocket connection
+```
+
+### Key Components
+
+Socket Layer (lib/Socket/)
+- socket.js: Core WebSocket connection, Noise protocol handshake, pairing code authentication
+- messages-send.js: Message generation, encryption, device enumeration
+- messages-recv.js: Message decryption, receipt handling, retry logic
+- groups.js: Group metadata, participants management, invite codes
+- communities.js: Community creation, linked groups, membership approval
+- business.js: Product catalog, orders, business profile
+- newsletter.js: Newsletter creation, following, reactions
+- chats.js: Chat operations
+- socketon.js: Simplified wrapper (makeWASocketon)
+
+Signal Layer (lib/Signal/)
+- libsignal.js: E2E encryption using libsignal-xeuka
+- Group cipher and sender key distribution for group messages
+- Session management and LID/PN addressing for multi-device
+
+Binary Protocol (lib/WABinary/)
+- encode.js: Binary node encoding for WhatsApp protocol
+- decode.js: Binary node decoding
+- constants.js: Protocol constants (643KB)
+- jid-utils.js: JID parsing, encoding, and validation
+
+Utils (lib/Utils/)
+- messages.js: Message generation helpers, media handling
+- messages-media.js: Media upload/download, encryption, thumbnail generation
+- event-buffer.js: Event buffering and flushing mechanism
+- auth-utils.js: Authentication helpers, pre-key management
+
+### Security Features
+
+Layer 1: Noise Protocol (XX pattern)
+- Ephemeral key exchange
+- Perfect forward secrecy
+- X25519 ECDH
+- AES-256-GCM
+- SHA-256 authentication
+
+Layer 2: Signal Protocol (E2E)
+- Double Ratchet
+- X3DH key agreement
+- Pre-key bundles
+- Sender keys for groups
+
+Layer 3: Advanced Device Verification
+- ADV signatures
+- Account signature key
+- Device signature
+- Chain of trust
+
+Layer 4: Obfuscation
+- Pairing code: XOR + hex arrays
+- Newsletter URL: XOR + random variables
 
 ---
 
-## Credits
+## Documentation
 
-- Original Baileys: [@adiwajshing/baileys](https://github.com/adiwajshing/baileys)
-- Socketon Enhancement: [IbraDecode](https://github.com/IbraDecode)
+### Key Files
+
+Core Socket:
+- lib/Socket/index.js - Entry point (makeWASocket)
+- lib/Socket/socket.js - Core connection (820 lines)
+- lib/Socket/socketon.js - Simplified wrapper (402 lines)
+- lib/Socket/messages-send.js - Message sending (1100 lines)
+- lib/Socket/messages-recv.js - Message receiving (1163 lines)
+- lib/Socket/groups.js - Group management (312 lines)
+- lib/Socket/communities.js - Communities (413 lines)
+- lib/Socket/business.js - Business API (377 lines)
+- lib/Socket/newsletter.js - Newsletter (245 lines)
+- lib/Socket/chats.js - Chat operations
+- lib/Socket/mex.js - Mex queries
+- lib/Socket/Client/ - WebSocket client
+
+Encryption:
+- lib/Signal/libsignal.js - Signal protocol (324 lines)
+- lib/Signal/Group/ - Group encryption
+- lib/Signal/lid-mapping.js - LID/PN mapping
+- lib/Utils/crypto.js - Crypto primitives (130 lines)
+- lib/Utils/noise-handler.js - Noise protocol (144 lines)
+- lib/Utils/auth-utils.js - Auth credentials (219 lines)
+
+Binary Protocol:
+- lib/WABinary/encode.js - Binary encoding (218 lines)
+- lib/WABinary/decode.js - Binary decoding (240 lines)
+- lib/WABinary/constants.js - Protocol constants (643 KB)
+- lib/WABinary/jid-utils.js - JID utilities
+- lib/WABinary/generic-utils.js - Helper functions
+
+Utilities:
+- lib/Utils/messages.js - Message generation (35 KB)
+- lib/Utils/messages-media.js - Media handling (21 KB)
+- lib/Utils/event-buffer.js - Event buffering (17 KB)
+- lib/Utils/message-retry-manager.js - Retry logic (113 lines)
+- lib/Utils/pre-key-manager.js - Pre-key management
+- lib/Utils/validate-connection.js - Login/registration (200 lines)
+- lib/Utils/generics.js - Generic helpers (355 lines)
+
+Storage:
+- lib/Store/make-in-memory-store.js - In-memory DB (290 lines)
+- lib/Store/object-repository.js - Object repository
+- lib/Store/make-cache-manager-store.js - Cache manager
+- lib/KeyDB/KeyedDB.js - Binary search DB
+
+Protocols:
+- lib/WAUSync/ - USync protocols
+- lib/WAM/ - WhatsApp Message types
+- WAProto/ - Protocol buffers (4.2 MB)
+
+Configuration:
+- lib/Defaults/index.js - Default config (123 lines)
 
 ---
 
 ## Support & Community
 
-- **Telegram Community**: [Join our community](https://t.me/socketon)
-- **GitHub Issues**: [Report bugs](https://github.com/IbraDecode/socketon/issues)
-- **WhatsApp**: +31617786379
+- Telegram Community: Join our community
+- GitHub Issues: Report bugs
+- WhatsApp: +31617786379
+- Complete Documentation
 
 ---
 
-## Version
+## License
 
-Socketon v1.51.16 - Built by IbraDecode
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Credits
+
+- Original Baileys: Baileys
+- Socketon Enhancement: IbraDecode
+
+---
 
 <p align="center">
   <a href="#readme-top">back to top</a>
