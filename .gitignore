@@ -1,0 +1,9 @@
+node_modules/
+auth/
+*.log
+*.tmp
+*.bak
+.DS_Store
+.env
+.vscode/
+.idea/

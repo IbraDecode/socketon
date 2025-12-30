@@ -1,0 +1,104 @@
+{
+  "name": "socketon",
+  "version": "1.51.16",
+  "description": "WhatsApp API Library - Socketon By IbraDecode & Socketon Community",
+  "keywords": [
+    "whatsapp",
+    "socketon",
+    "baileys",
+    "whatsapp-web",
+    "whatsapp-chat",
+    "whatsapp-group",
+    "botwa",
+    "whatsapp-bot",
+    "whatsapp-api",
+    "socketon-whatsapp"
+  ],
+  "homepage": "https://github.com/IbraDecode/socketon",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/IbraDecode/socketon.git"
+  },
+  "license": "MIT",
+  "author": "Ibra Decode",
+  "main": "./lib/index.js",
+  "files": [
+    "lib/*",
+    "WAProto/*"
+  ],
+  "scripts": {
+    "changelog:update": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "changelog:preview": "conventional-changelog -p angular -u",
+    "changelog:last": "conventional-changelog -p angular -r 2",
+    "gen:protobuf": "sh WAProto/GenerateStatics.sh",
+    "example": "node --inspect Example/example.js",
+    "lint": "eslint src --ext .js",
+    "lint:fix": "yarn lint --fix",
+    "release": "release-it",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@whiskeysockets/eslint-config": "github:whiskeysockets/eslint-config",
+    "@cacheable/node-cache": "*",
+    "gradient-string": "2.0.2",
+    "libsignal-xeuka": "npm:@socketon/libsignal-node",
+    "moment-timezone": "*",
+    "music-metadata": "*",
+    "cache-manager": "*",
+    "async-mutex": "*",
+    "@hapi/boom": "*",
+    "pbjs": "^0.0.14",
+    "protobufjs": "^7.0.0",
+    "lru-cache": "*",
+    "readline": "*",
+    "p-queue": "*",
+    "lodash": "*",
+    "figlet": "*",
+    "axios": "*",
+    "path": "*",
+    "pino": "*",
+    "ws": "*",
+    "fs": "*",
+    "os": "*"
+  },
+  "devDependencies": {
+    "conventional-changelog-cli": "*",
+    "link-preview-js": "*",
+    "protobufjs-cli": "*",
+    "cache-manager": "*",
+    "@types/jest": "*",
+    "@types/node": "*",
+    "release-it": "*",
+    "@types/ws": "*",
+    "eslint": "*",
+    "jest": "*",
+    "json": "*",
+    "open": "*"
+  },
+  "peerDependencies": {
+    "link-preview-js": "*",
+    "audio-decode": "*",
+    "jimp": ">=0.16.0"
+  },
+  "peerDependenciesMeta": {
+    "audio-decode": {
+      "optional": true
+    },
+    "jimp": {
+      "optional": true
+    },
+    "link-preview-js": {
+      "optional": true
+    }
+  },
+  "packageManager": "yarn@1.22.19",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "bugs": {
+    "url": "https://github.com/IbraDecode/socketon/issues"
+  }
+}
