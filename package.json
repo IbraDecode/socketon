@@ -21,7 +21,7 @@
   },
   "license": "MIT",
   "author": "Ibra Decode",
-  "main": "./lib/index.js",
+  "main": "./index.js",
   "files": [
     "lib/*",
     "WAProto/*"
@@ -38,48 +38,48 @@
     "test": "jest"
   },
   "dependencies": {
-    "@whiskeysockets/eslint-config": "github:whiskeysockets/eslint-config",
     "@cacheable/node-cache": "*",
+    "@hapi/boom": "*",
+    "@whiskeysockets/eslint-config": "github:whiskeysockets/eslint-config",
+    "async-mutex": "*",
+    "axios": "*",
+    "cache-manager": "*",
+    "chalk": "^4.1.2",
+    "figlet": "*",
+    "fs": "*",
     "gradient-string": "2.0.2",
     "libsignal-xeuka": "npm:@socketon/libsignal-node",
+    "lodash": "*",
+    "lru-cache": "*",
     "moment-timezone": "*",
     "music-metadata": "*",
-    "cache-manager": "*",
-    "async-mutex": "*",
-    "@hapi/boom": "*",
-    "pbjs": "^0.0.14",
-    "protobufjs": "^7.0.0",
-    "lru-cache": "*",
-    "readline": "*",
-    "p-queue": "*",
-    "lodash": "*",
-    "figlet": "*",
-    "axios": "*",
-    "path": "*",
-    "pino": "*",
-    "ws": "*",
-    "fs": "*",
     "os": "*",
-    "chalk": "^4.1.2"
+    "p-queue": "*",
+    "path": "*",
+    "pbjs": "^0.0.14",
+    "pino": "*",
+    "protobufjs": "^7.0.0",
+    "readline": "*",
+    "ws": "*"
   },
   "devDependencies": {
-    "conventional-changelog-cli": "*",
-    "link-preview-js": "*",
-    "protobufjs-cli": "*",
-    "cache-manager": "*",
     "@types/jest": "*",
     "@types/node": "*",
-    "release-it": "*",
     "@types/ws": "*",
+    "cache-manager": "*",
+    "conventional-changelog-cli": "*",
     "eslint": "*",
     "jest": "*",
     "json": "*",
-    "open": "*"
+    "link-preview-js": "*",
+    "open": "*",
+    "protobufjs-cli": "*",
+    "release-it": "*"
   },
   "peerDependencies": {
-    "link-preview-js": "*",
     "audio-decode": "*",
-    "jimp": ">=0.16.0"
+    "jimp": "^0.16.1",
+    "link-preview-js": "*"
   },
   "peerDependenciesMeta": {
     "audio-decode": {
