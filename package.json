@@ -59,7 +59,8 @@
     "pino": "*",
     "ws": "*",
     "fs": "*",
-    "os": "*"
+    "os": "*",
+    "chalk": "^4.1.2"
   },
   "devDependencies": {
     "conventional-changelog-cli": "*",
@@ -100,5 +101,6 @@
   },
   "bugs": {
     "url": "https://github.com/IbraDecode/socketon/issues"
-  }
+  },
+  "type": "module"
 }
