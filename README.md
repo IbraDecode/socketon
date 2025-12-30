@@ -276,6 +276,160 @@ await sock.newsletterReactMessage(newsletter.id, serverId, '❤️');
 
 ---
 
+
+## makeWASocketon - Simplified Socket Initialization
+
+`makeWASocketon()` is a simplified wrapper around `makeWASocket()` with built-in features like auto-reconnect, message serialization, and helper methods.
+
+### Basic Usage
+
+```javascript
+const { makeWASocketon } = require('socketon');
+
+const sock = await makeWASocketon({
+  sessionDir: './session',        // Folder to store session
+  pairingNumber: '6281234567890', // Phone number (without +)
+  onMessage: async (msg) => {   // Message handler
+    if (msg.text === '!ping') {
+      await sock.reply(msg, 'Pong! 🏓');
+    }
+  }
+});
+
+// Auto-reconnect, auto-save credentials built-in!
+```
+
+### With Custom Pairing Code (Optional)
+
+```javascript
+const sock = await makeWASocketon({
+  sessionDir: './session',
+  pairingNumber: '6281234567890',
+  pairingCode: 'MYCODE12',       // Optional: 8 characters
+  onMessage: async (msg) => {
+    await sock.reply(msg, 'Hello!');
+  }
+});
+```
+
+### Configuration Options
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `sessionDir` | string | Yes | - | Folder to store session files |
+| `pairingNumber` | string | Yes | - | Phone number (e.g., "6281234567890") |
+| `pairingCode` | string | No | Default | Custom pairing code (must be 8 chars) |
+| `onMessage` | function | Yes | - | Callback for new messages |
+| `onConnection` | function | No | - | Callback for connection status updates |
+| `onGroupJoin` | function | No | - | Callback for group joins |
+| `onGroupLeave` | function | No | - | Callback for group leaves |
+| `onError` | function | No | - | Callback for errors |
+| `enableAutoReconnect` | boolean | No | true | Enable auto-reconnect on disconnect |
+| `enableMetadataCache` | boolean | No | true | Enable group metadata caching |
+| `syncFullHistory` | boolean | No | false | Sync full message history |
+| `browser` | object | No | Browsers.ubuntu("Chrome") | Browser configuration |
+| `logger` | object | No | pino default | Custom logger instance |
+
+### Built-in Helper Methods
+
+```javascript
+// Serialize message (automatically done in onMessage)
+const serialized = sock.serialize(rawMessage);
+
+// Get group metadata with caching
+const metadata = await sock.getGroupMetadata('group@g.us');
+
+// Clear group cache
+sock.clearGroupCache(); // Clear all
+sock.clearGroupCache('group@g.us'); // Clear specific
+
+// Download media
+const buffer = await sock.downloadMedia(message);
+const filePath = await sock.downloadMedia(message, 'image', 'photo.jpg');
+
+// Decode JID
+const decodedJid = sock.decodeJid('user:5@s.whatsapp.net');
+
+// Send message
+await sock.send('jid@s.whatsapp.net', { text: 'Hello' });
+
+// Reply to message
+await sock.reply(message, 'Reply!');
+
+// Forward message
+await sock.forward('jid@s.whatsapp.net', message);
+
+// Set presence
+await sock.setPresence('available');
+await sock.setPresence('composing', 'jid@s.whatsapp.net');
+await sock.setPresence('recording', 'jid@s.whatsapp.net');
+
+// Graceful shutdown
+await sock.shutdown();
+```
+
+### Example Bot
+
+```javascript
+const { makeWASocketon } = require('socketon');
+
+const sock = await makeWASocketon({
+  sessionDir: './bot-session',
+  pairingNumber: '6281234567890',
+  onConnection: (status) => {
+    if (status === 'open') {
+      console.log('✅ Bot is ready!');
+    }
+  },
+  onGroupJoin: async (msg) => {
+    await sock.reply(msg, `Welcome @${msg.author}! 👋`);
+  },
+  onMessage: async (msg) => {
+    const text = msg.text.toLowerCase();
+    
+    if (text === '!menu') {
+      await sock.reply(msg, `
+📋 *MENU*
+• !ping - Test bot
+• !info - Bot info
+• !owner - Contact owner
+      `);
+    }
+    else if (text === '!ping') {
+      await sock.reply(msg, 'Pong! ⚡');
+    }
+    else if (text === '!info') {
+      await sock.reply(msg, `
+🤖 *BOT INFO*
+Status: Online
+Session: ${sock.sessionId}
+Socketon: v1.51.16
+      `);
+    }
+  }
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\nShutting down...');
+  await sock.shutdown();
+  process.exit(0);
+});
+```
+
+### Auto-Reconnect with Exponential Backoff
+
+Socketon includes built-in auto-reconnect with exponential backoff to prevent getting banned:
+
+- **Base delay:** 5 seconds
+- **Max delay:** 60 seconds
+- **Max attempts:** 10
+
+Reconnect formula:
+```
+delay = min(5000 * 2^attempt, 60000)
+```
+
 ## Troubleshooting
 
 ### Common Issues
